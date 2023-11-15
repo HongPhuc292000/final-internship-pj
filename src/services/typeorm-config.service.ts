@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
-import { IRootConfig } from 'src/types/config';
+import { IRootConfig } from 'src/types/Config';
 
 @Injectable()
 export class TypeOrmConfigService implements TypeOrmOptionsFactory {
@@ -22,7 +22,8 @@ export class TypeOrmConfigService implements TypeOrmOptionsFactory {
     return {
       ...backupTypeOrmConfig,
       ...typeOrmConfig,
-      entities: [__dirname + '../**/modules/**/*.entity.{ts,js}'],
+      entities: [__dirname + '/../modules/**/*.entity.{ts,js}'],
+      autoLoadEntities: true,
     } as TypeOrmModuleOptions;
   }
 }

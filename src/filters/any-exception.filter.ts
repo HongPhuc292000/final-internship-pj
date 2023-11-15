@@ -7,6 +7,7 @@ import {
   HttpExceptionBody,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { QueryFailedError } from 'typeorm';
 
 @Catch()
 export class AnyExceptionFilter implements ExceptionFilter {
@@ -21,6 +22,9 @@ export class AnyExceptionFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionBody = exception.getResponse() as HttpExceptionBody;
       error = exceptionBody.error;
+      message = exception.message;
+    }
+    if (exception instanceof QueryFailedError) {
       message = exception.message;
     }
     response.status(status).json({
