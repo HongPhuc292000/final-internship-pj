@@ -15,15 +15,15 @@ export class ResponseData<D> {
 }
 
 export class ListResponseData<T> extends ResponseData<T> {
-  page: number;
-  size: number;
-  total?: number;
+  total: number;
+  page?: number;
+  size?: number;
 
   constructor(
     data: T[],
-    page: number,
-    size: number,
     total: number,
+    page?: number,
+    size?: number,
     statusCode?: number,
     message?: string,
   ) {

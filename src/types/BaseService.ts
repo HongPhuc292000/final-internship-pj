@@ -1,9 +1,10 @@
+import { SelectQueryBuilder } from 'typeorm';
 import { ListResponseData, ResponseData } from './Response';
 
 export interface IBaseService<T> {
   saveNewData(entity: T): Promise<ResponseData<string>>;
-  findAll(
-    query: string,
+  handlePageSize(
+    selectQueryBuilder: SelectQueryBuilder<T>,
     page?: number,
     size?: number,
   ): Promise<ListResponseData<T>>;

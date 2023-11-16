@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
-import { CommonQuery } from 'src/types/Query';
+import { ICategoryQuery } from 'src/types/Query';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
 @Controller('category')
@@ -24,7 +24,7 @@ export class CategoryController {
   }
 
   @Get()
-  findAll(@Query() query: CommonQuery) {
+  findAll(@Query() query: ICategoryQuery) {
     return this.categoryService.findAllCategory(query);
   }
 

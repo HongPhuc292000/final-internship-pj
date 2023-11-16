@@ -1,19 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
+import { BaseService } from 'src/services/base-crud.service';
+import { EEntityName, ListResponseData, ResponseData } from 'src/types';
+import { ICategoryQuery } from 'src/types/Query';
+import { DataSource, Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
-import { BaseService } from 'src/services/base-crud.service';
 import { Category } from './entities/category.entity';
-import { EEntityName, ListResponseData, ResponseData } from 'src/types';
-import { CommonQuery } from 'src/types/Query';
 
 @Injectable()
 export class CategoryService extends BaseService<Category> {
   constructor(
     @InjectRepository(Category)
     private categoryRepository: Repository<Category>,
+    private dataSource: DataSource,
   ) {
     super(categoryRepository);
   }
@@ -21,24 +22,29 @@ export class CategoryService extends BaseService<Category> {
   async addNewCategory(
     createCategoryDto: CreateCategoryDto,
   ): Promise<ResponseData<string>> {
-    const { parentId } = createCategoryDto;
-    const newCategory = this.categoryRepository.create(createCategoryDto);
+    const { parentId, ...rest } = createCategoryDto;
+    const newCategory = this.categoryRepository.create(rest);
+    await this.checkUniqueFieldDataIsUsed({ name: rest.name }, 'category name');
     if (parentId) {
-      const parent = await this.categoryRepository.findOneBy({ id: parentId });
+      const parent = await this.findExistedData({ id: parentId }, 'category');
       newCategory.parent = parent;
     }
     return this.saveNewData(newCategory);
   }
 
   async findAllCategory(
-    query: CommonQuery,
+    query: ICategoryQuery,
   ): Promise<ListResponseData<Category>> {
-    const { page = 1, size = 10, searchKey = '' } = query;
-    const result = await this.findAll(
-      `SELECT * FROM category WHERE category.deleted_at IS NULL AND LOWER(category.name) LIKE LOWER('%${searchKey}%')`,
-      page,
-      size,
-    );
+    const { page = 1, size = 10, searchKey = '', parentId, all } = query;
+    const specifiedQuery = this.categoryRepository
+      .createQueryBuilder('category')
+      .where('category.name like :searchKey', { searchKey: `%${searchKey}%` });
+    if (parentId) {
+      specifiedQuery.andWhere('category.parent_id = :parentId', {
+        parentId,
+      });
+    }
+    const result = await this.handlePageSize(specifiedQuery, all, page, size);
     result.data = plainToInstance(Category, result.data);
     return result;
   }
@@ -54,6 +60,7 @@ export class CategoryService extends BaseService<Category> {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<ResponseData<string>> {
     const { parentId, ...rest } = updateCategoryDto;
+    await this.checkUniqueFieldDataIsUsed({ name: rest.name }, 'category name');
     const category = await this.categoryRepository.findOne({
       where: { id },
       relations: { parent: true },
@@ -64,13 +71,27 @@ export class CategoryService extends BaseService<Category> {
       });
       category.parent = newParent;
     }
-
     return this.updateData(category, rest);
   }
 
   async removeCategory(id: string): Promise<ResponseData<string>> {
-    const category = await this.categoryRepository.findOneBy({ id });
-    category.childs = [];
-    return await this.removeData(category);
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const category = await this.categoryRepository.findOneBy({ id });
+      category.childs = [];
+      const result = await this.removeData(category);
+      await queryRunner.commitTransaction();
+      return result;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw new InternalServerErrorException({
+        message: 'something bad happen',
+      });
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

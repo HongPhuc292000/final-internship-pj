@@ -5,7 +5,7 @@ import { Column, ManyToOne, OneToMany, Entity, JoinColumn } from 'typeorm';
 @Entity()
 export class Category extends CustomBaseEntity {
   @Expose()
-  @Column({ length: 30, nullable: false })
+  @Column({ length: 30, nullable: false, unique: true })
   name: string;
 
   @OneToMany(() => Category, (category) => category.parent)
