@@ -9,6 +9,7 @@ import databaseConfig from './configs/typeorm.config';
 import { AnyExceptionFilter } from './filters/any-exception.filter';
 import { VariantModule } from './modules/variant/variant.module';
 import { AtributeModule } from './modules/atribute/atribute.module';
+import { AtributeOptionModule } from './modules/atribute-option/atribute-option.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -26,6 +27,7 @@ const ENV = process.env.NODE_ENV;
     CategoryModule,
     VariantModule,
     AtributeModule,
+    AtributeOptionModule,
   ],
   providers: [
     {
