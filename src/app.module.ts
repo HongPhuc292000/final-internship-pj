@@ -8,6 +8,7 @@ import { CategoryModule } from './modules/category/category.module';
 import databaseConfig from './configs/typeorm.config';
 import { AnyExceptionFilter } from './filters/any-exception.filter';
 import { VariantModule } from './modules/variant/variant.module';
+import { AtributeModule } from './modules/atribute/atribute.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -24,6 +25,7 @@ const ENV = process.env.NODE_ENV;
     }),
     CategoryModule,
     VariantModule,
+    AtributeModule,
   ],
   providers: [
     {

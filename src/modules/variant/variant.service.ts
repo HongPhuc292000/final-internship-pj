@@ -13,9 +13,4 @@ export class VariantService extends BaseService<Variant> {
   ) {
     super(variantRepository);
   }
-
-  async addNewVariant(createCategoryDto: CreateCategoryDto): Promise<Variant> {
-    const newVariant = this.variantRepository.create(createCategoryDto);
-    return await this.variantRepository.save(newVariant);
-  }
 }
