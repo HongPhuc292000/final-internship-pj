@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import {
   DataSource,
+  DeepPartial,
   FindOptionsWhere,
   Repository,
   SelectQueryBuilder,
@@ -45,7 +46,12 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     }
   }
 
-  async saveNewData(entity: Entity) {
+  async addNewData(createEntityDto: DeepPartial<Entity>): Promise<Entity> {
+    const newVariant = this.genericRepository.create(createEntityDto);
+    return await this.genericRepository.save(newVariant);
+  }
+
+  async addNewDataWithResponse(entity: Entity) {
     const createdEntity = await this.genericRepository.save(entity);
     return new ResponseData(createdEntity.id, HttpStatus.CREATED);
   }

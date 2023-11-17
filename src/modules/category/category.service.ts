@@ -29,7 +29,7 @@ export class CategoryService extends BaseService<Category> {
       const parent = await this.findExistedData({ id: parentId }, 'category');
       newCategory.parent = parent;
     }
-    return this.saveNewData(newCategory);
+    return this.addNewDataWithResponse(newCategory);
   }
 
   async findAllCategory(
