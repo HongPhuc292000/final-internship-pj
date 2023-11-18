@@ -14,6 +14,7 @@ import {
 import { IBaseService } from 'src/types/BaseService';
 import { CustomBaseEntity } from 'src/utils/base.entity';
 import { ListResponseData, ResponseData } from 'src/types';
+import { ICommonQuery } from 'src/types/Query';
 
 @Injectable()
 export abstract class BaseService<Entity extends CustomBaseEntity>
@@ -56,15 +57,18 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ResponseData(createdEntity.id, HttpStatus.CREATED);
   }
 
-  async handlePageSize(
+  async handleCommonQuery(
     selectQueryBuilder: SelectQueryBuilder<Entity>,
-    all?: 1,
-    page?: number,
-    size?: number,
+    commonQuery: ICommonQuery,
   ): Promise<ListResponseData<Entity>> {
+    const { page = 1, size = 10, searchKey = '', all } = commonQuery;
     const queryPage = page;
     const querySize = size;
-    selectQueryBuilder.skip(all ? 0 : (page - 1) * size);
+    selectQueryBuilder
+      .andWhere('category.name like :searchKey', {
+        searchKey: `%${searchKey}%`,
+      })
+      .skip(all ? 0 : (page - 1) * size);
     if (!all) {
       selectQueryBuilder.take(size);
     }
