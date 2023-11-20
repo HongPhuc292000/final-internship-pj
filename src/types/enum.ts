@@ -2,4 +2,9 @@ enum EEntityName {
   CATEGORY = 'category',
 }
 
-export { EEntityName };
+enum ECreateResponseString {
+  CREATED = 'created data',
+  FAILED = 'create data failed',
+}
+
+export { EEntityName, ECreateResponseString };

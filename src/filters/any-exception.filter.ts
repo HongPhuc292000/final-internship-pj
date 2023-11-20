@@ -25,6 +25,7 @@ export class AnyExceptionFilter implements ExceptionFilter {
       message = exception.message;
     }
     if (exception instanceof QueryFailedError) {
+      error = 'Query error';
       message = exception.message;
     }
     response.status(status).json({

@@ -21,9 +21,13 @@ export class AtributeService extends BaseService<Atribute> {
   }
 
   async findAllAtribute(query: ICommonQuery) {
-    const specifiedQuery =
-      this.atributeRepository.createQueryBuilder('category');
-    const result = await this.handleCommonQuery(specifiedQuery, query);
+    const { searchKey = '', ...rest } = query;
+    const specifiedQuery = this.atributeRepository
+      .createQueryBuilder('atribute')
+      .where('atribute.name like :searchKey', {
+        searchKey: `%${searchKey}%`,
+      });
+    const result = await this.handleCommonQuery(specifiedQuery, rest);
     return result;
   }
 }

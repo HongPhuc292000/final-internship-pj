@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import {
   DataSource,
@@ -13,7 +14,11 @@ import {
 } from 'typeorm';
 import { IBaseService } from 'src/types/BaseService';
 import { CustomBaseEntity } from 'src/utils/base.entity';
-import { ListResponseData, ResponseData } from 'src/types';
+import {
+  ECreateResponseString,
+  ListResponseData,
+  ResponseData,
+} from 'src/types';
 import { ICommonQuery } from 'src/types/Query';
 
 @Injectable()
@@ -52,23 +57,44 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return await this.genericRepository.save(newVariant);
   }
 
-  async addNewDataWithResponse(entity: Entity) {
+  async addNewDataWithResponse(entity: Entity): Promise<ResponseData<string>> {
     const createdEntity = await this.genericRepository.save(entity);
     return new ResponseData(createdEntity.id, HttpStatus.CREATED);
+  }
+
+  async addNewMultipleDataWithResponse(
+    entities: Entity[],
+  ): Promise<ResponseData<string>> {
+    const createdEntities = await Promise.allSettled(
+      entities.map(async (entity) => {
+        const savedEntity = await this.genericRepository.save(entity);
+        return savedEntity.id;
+      }),
+    )
+      .then((res) => {
+        const dataResponse = res.map((item) => {
+          if (item.status === 'fulfilled') {
+            return item.value;
+          } else {
+            return ECreateResponseString.FAILED;
+          }
+        });
+        return dataResponse;
+      })
+      .catch((err) => {
+        throw new InternalServerErrorException(err);
+      });
+    return new ResponseData(createdEntities, HttpStatus.CREATED);
   }
 
   async handleCommonQuery(
     selectQueryBuilder: SelectQueryBuilder<Entity>,
     commonQuery: ICommonQuery,
   ): Promise<ListResponseData<Entity>> {
-    const { page = 1, size = 10, searchKey = '', all } = commonQuery;
+    const { page = 1, size = 10, all } = commonQuery;
     const queryPage = page;
     const querySize = size;
-    selectQueryBuilder
-      .andWhere('category.name like :searchKey', {
-        searchKey: `%${searchKey}%`,
-      })
-      .skip(all ? 0 : (page - 1) * size);
+    selectQueryBuilder.skip(all ? 0 : (page - 1) * size);
     if (!all) {
       selectQueryBuilder.take(size);
     }

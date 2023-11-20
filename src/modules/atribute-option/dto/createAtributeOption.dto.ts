@@ -1,11 +1,16 @@
-import { IsNotEmpty, IsUUID, MaxLength } from 'class-validator';
+import { IsArray, IsNotEmpty, IsUUID } from 'class-validator';
 
-export class CreateAtributeOptionDto {
-  @IsNotEmpty()
-  @MaxLength(20)
-  name: string;
+// export class CreateAtributeOptionDto {
+//   @IsNotEmpty()
+//   @MaxLength(20)
+//   value: string;
+// }
 
+export class CreateMultipleAtributeOptionDto {
   @IsNotEmpty()
   @IsUUID()
   atributeId: string;
+
+  @IsNotEmpty()
+  data: string[];
 }
