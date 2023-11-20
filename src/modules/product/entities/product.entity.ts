@@ -1,6 +1,6 @@
 import { Category } from 'src/modules/category/entities/category.entity';
 import { ImageLink } from 'src/modules/image-link/entities/image-link.entity';
-import { ProductVariant } from 'src/modules/product-variant/entities/product-variant.entity';
+import { Variant } from 'src/modules/variant/entities/variant.entity';
 import { CustomBaseEntity } from 'src/utils/base.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
@@ -15,8 +15,8 @@ export class Product extends CustomBaseEntity {
   @Column({ length: 2000, nullable: false })
   description: string;
 
-  @OneToMany(() => ProductVariant, (productVariant) => productVariant.product)
-  productVariants: ProductVariant[];
+  @OneToMany(() => Variant, (variant) => variant.product)
+  productVariants: Variant[];
 
   @OneToMany(() => ImageLink, (imageLink) => imageLink.product)
   imageLinks: ImageLink[];

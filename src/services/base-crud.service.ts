@@ -53,8 +53,8 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   }
 
   async addNewData(createEntityDto: DeepPartial<Entity>): Promise<Entity> {
-    const newVariant = this.genericRepository.create(createEntityDto);
-    return await this.genericRepository.save(newVariant);
+    const newEntity = this.genericRepository.create(createEntityDto);
+    return await this.genericRepository.save(newEntity);
   }
 
   async addNewDataWithResponse(entity: Entity): Promise<ResponseData<string>> {
@@ -106,7 +106,10 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ListResponseData(records, totalRecord, queryPage, querySize);
   }
 
-  async findById(id: any, entityName: string): Promise<ResponseData<Entity>> {
+  async findByIdWithResponse(
+    id: any,
+    entityName: string,
+  ): Promise<ResponseData<Entity>> {
     const entity = await this.genericRepository.findOne({ where: { id } });
     if (!entity) {
       throw new NotFoundException({

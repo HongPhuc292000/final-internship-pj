@@ -52,7 +52,7 @@ export class CategoryService extends BaseService<Category> {
   }
 
   async findOneCategory(id: string): Promise<ResponseData<Category>> {
-    const result = await this.findById(id, EEntityName.CATEGORY);
+    const result = await this.findByIdWithResponse(id, EEntityName.CATEGORY);
     result.data = plainToInstance(Category, result.data);
     return result;
   }
