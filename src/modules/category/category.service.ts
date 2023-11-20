@@ -35,11 +35,14 @@ export class CategoryService extends BaseService<Category> {
   async findAllCategory(
     query: ICategoryQuery,
   ): Promise<ListResponseData<Category>> {
-    const { parentId, ...rest } = query;
-    const specifiedQuery =
-      this.categoryRepository.createQueryBuilder('category');
+    const { parentId, searchKey = '', ...rest } = query;
+    const specifiedQuery = this.categoryRepository
+      .createQueryBuilder('category')
+      .where('category.name like :searchKey', {
+        searchKey: `%${searchKey}%`,
+      });
     if (parentId) {
-      specifiedQuery.where('category.parent_id = :parentId', {
+      specifiedQuery.andWhere('category.parent_id = :parentId', {
         parentId,
       });
     }
