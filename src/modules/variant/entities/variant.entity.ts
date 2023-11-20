@@ -1,8 +1,35 @@
+import { ImageLink } from 'src/modules/image-link/entities/image-link.entity';
+import { Product } from 'src/modules/product/entities/product.entity';
+import { VariantAtribute } from 'src/modules/variant-atribute/entities/variant-atribute.entity';
 import { CustomBaseEntity } from 'src/utils/base.entity';
-import { Column, Entity } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 
 @Entity()
 export class Variant extends CustomBaseEntity {
-  @Column({ length: 100, nullable: false })
-  name: string;
+  @ManyToOne(() => Product, (product) => product.productVariants)
+  @JoinColumn({ name: 'product_id' })
+  product: Product;
+
+  @Column({ name: 'total_instock', type: 'int', nullable: false, default: 0 })
+  totalInstock: number;
+
+  @Column({ name: 'initial_price', type: 'int', nullable: false })
+  initialPrice: number;
+
+  @OneToOne(() => ImageLink)
+  @JoinColumn({ name: 'image_id' })
+  image: ImageLink;
+
+  @OneToMany(
+    () => VariantAtribute,
+    (variantAtribute) => variantAtribute.variant,
+  )
+  variantAtributes: VariantAtribute[];
 }

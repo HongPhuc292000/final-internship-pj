@@ -6,7 +6,7 @@ import { Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
 
 @Entity('variant_atribute')
 export class VariantAtribute extends CustomBaseEntity {
-  @ManyToOne(() => Variant)
+  @ManyToOne(() => Variant, (variant) => variant.variantAtributes)
   @JoinColumn({ name: 'variant_id' })
   variant: Variant;
 
