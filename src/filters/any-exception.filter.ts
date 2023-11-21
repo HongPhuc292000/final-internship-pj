@@ -21,7 +21,7 @@ export class AnyExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionBody = exception.getResponse() as HttpExceptionBody;
-      error = exceptionBody.error || error;
+      error = exceptionBody?.error || error;
       message = exception.message;
     }
     if (exception instanceof QueryFailedError) {

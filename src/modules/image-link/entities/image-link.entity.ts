@@ -7,7 +7,7 @@ export class ImageLink extends CustomBaseEntity {
   @Column({ name: 'link' })
   imageUrl: string;
 
-  @ManyToOne(() => Product)
-  @JoinColumn({ name: 'product_id' })
-  product: Product;
+  // @ManyToOne(() => Product)
+  // @JoinColumn({ name: 'product_id' })
+  // product: Product;
 }
