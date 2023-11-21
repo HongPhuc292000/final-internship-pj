@@ -11,6 +11,7 @@ import { VariantModule } from './modules/variant/variant.module';
 import { AtributeModule } from './modules/atribute/atribute.module';
 import { AtributeOptionModule } from './modules/atribute-option/atribute-option.module';
 import { VariantAtributeModule } from './modules/variant-atribute/variant-atribute.module';
+import { ProductModule } from './modules/product/product.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -30,6 +31,7 @@ const ENV = process.env.NODE_ENV;
     AtributeModule,
     AtributeOptionModule,
     VariantAtributeModule,
+    ProductModule,
   ],
   providers: [
     {

@@ -9,19 +9,21 @@ export class Product extends CustomBaseEntity {
   @Column({ length: 200, nullable: false })
   name: string;
 
-  @Column({ type: 'int', default: 0, nullable: false })
+  @Column({ type: 'int', default: 0 })
   sold: number;
 
   @Column({ length: 2000, nullable: false })
   description: string;
 
-  @OneToMany(() => Variant, (variant) => variant.product)
+  @OneToMany(() => Variant, (variant) => variant.product, {
+    cascade: ['insert'],
+  })
   productVariants: Variant[];
 
-  @OneToMany(() => ImageLink, (imageLink) => imageLink.product)
-  imageLinks: ImageLink[];
+  // @OneToMany(() => ImageLink, (imageLink) => imageLink.product)
+  // imageLinks: ImageLink[];
 
-  @ManyToOne(() => Category)
+  @ManyToOne(() => Category, { nullable: false })
   @JoinColumn({ name: 'category_id' })
   category: Category;
 }

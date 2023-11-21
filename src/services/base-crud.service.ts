@@ -27,6 +27,12 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
 {
   constructor(private readonly genericRepository: Repository<Entity>) {}
 
+  // find record
+  async checkExistedDataBoolean(where: FindOptionsWhere<Entity>) {
+    return await this.genericRepository.findOne({ where });
+  }
+
+  // find record has field is unique, if found throw error
   async checkUniqueFieldDataIsUsed(
     where: FindOptionsWhere<Entity>,
     targetName: string,
@@ -40,7 +46,8 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     }
   }
 
-  async findExistedData(where: FindOptionsWhere<Entity>, targetName: string) {
+  // find record is exited or not. if found return record. if not, throw error
+  async findExistedData(where: FindOptionsWhere<Entity>, targetName?: string) {
     const entity = await this.genericRepository.findOne({ where });
     if (entity) {
       return entity;
@@ -52,16 +59,19 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     }
   }
 
+  // add new record to db with a createDto
   async addNewData(createEntityDto: DeepPartial<Entity>): Promise<Entity> {
     const newEntity = this.genericRepository.create(createEntityDto);
     return await this.genericRepository.save(newEntity);
   }
 
+  // add new record to db with an entity created and return a response
   async addNewDataWithResponse(entity: Entity): Promise<ResponseData<string>> {
     const createdEntity = await this.genericRepository.save(entity);
     return new ResponseData(createdEntity.id, HttpStatus.CREATED);
   }
 
+  // add new multiple record and response
   async addNewMultipleDataWithResponse(
     entities: Entity[],
   ): Promise<ResponseData<string>> {
@@ -87,6 +97,7 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ResponseData(createdEntities, HttpStatus.CREATED);
   }
 
+  // handle common query
   async handleCommonQuery(
     selectQueryBuilder: SelectQueryBuilder<Entity>,
     commonQuery: ICommonQuery,
@@ -106,6 +117,7 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ListResponseData(records, totalRecord, queryPage, querySize);
   }
 
+  // find one by id with response
   async findByIdWithResponse(
     id: any,
     entityName: string,
@@ -120,6 +132,7 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ResponseData(entity);
   }
 
+  // update data existed
   async updateData(entity: Entity, newData: Partial<Entity>) {
     const updatedEntity = await this.genericRepository.save({
       ...entity,
@@ -129,6 +142,7 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ResponseData(updatedEntity.id);
   }
 
+  // soft remove data
   async removeData(entity: Entity) {
     await this.genericRepository.save(entity);
     await this.genericRepository.softRemove(entity);

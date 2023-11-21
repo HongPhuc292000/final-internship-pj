@@ -2,7 +2,14 @@ import { AtributeOption } from 'src/modules/atribute-option/entities/atribute-op
 import { Atribute } from 'src/modules/atribute/entities/atribute.entity';
 import { Variant } from 'src/modules/variant/entities/variant.entity';
 import { CustomBaseEntity } from 'src/utils/base.entity';
-import { Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import {
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToOne,
+} from 'typeorm';
 
 @Entity('variant_atribute')
 export class VariantAtribute extends CustomBaseEntity {
@@ -10,21 +17,11 @@ export class VariantAtribute extends CustomBaseEntity {
   @JoinColumn({ name: 'variant_id' })
   variant: Variant;
 
-  @ManyToOne(() => Atribute)
+  @ManyToOne(() => Atribute, { cascade: ['insert'] })
   @JoinColumn({ name: 'atribute_id' })
   atribute: Atribute;
 
-  @ManyToMany(() => AtributeOption)
-  @JoinTable({
-    name: 'variant_atribute_option',
-    joinColumn: {
-      name: 'variant_atribute_id',
-      referencedColumnName: 'id',
-    },
-    inverseJoinColumn: {
-      name: 'atribute_option_id',
-      referencedColumnName: 'id',
-    },
-  })
-  atributeOptions: AtributeOption[];
+  @ManyToOne(() => AtributeOption, { cascade: ['insert'] })
+  @JoinColumn({ name: 'atribute_option_id' })
+  atributeOption: AtributeOption;
 }
