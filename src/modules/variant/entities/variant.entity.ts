@@ -26,9 +26,9 @@ export class Variant extends CustomBaseEntity {
   @Column({ name: 'reduced_price', type: 'int' })
   reducedPrice: number;
 
-  // @OneToOne(() => ImageLink)
-  // @JoinColumn({ name: 'image_id' })
-  // image: ImageLink;
+  @OneToOne(() => ImageLink, { cascade: ['insert'] })
+  @JoinColumn({ name: 'image_id' })
+  image: ImageLink;
 
   @OneToMany(
     () => VariantAtribute,

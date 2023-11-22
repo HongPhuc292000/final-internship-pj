@@ -20,8 +20,10 @@ export class Product extends CustomBaseEntity {
   })
   productVariants: Variant[];
 
-  // @OneToMany(() => ImageLink, (imageLink) => imageLink.product)
-  // imageLinks: ImageLink[];
+  @OneToMany(() => ImageLink, (imageLink) => imageLink.product, {
+    cascade: ['insert'],
+  })
+  imageLinks: ImageLink[];
 
   @ManyToOne(() => Category, (category) => category.products, {
     nullable: false,

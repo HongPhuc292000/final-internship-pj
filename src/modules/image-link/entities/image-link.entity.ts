@@ -4,10 +4,10 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('image_link')
 export class ImageLink extends CustomBaseEntity {
-  @Column({ name: 'link' })
+  @Column({ name: 'link', length: 30, nullable: false })
   imageUrl: string;
 
-  // @ManyToOne(() => Product)
-  // @JoinColumn({ name: 'product_id' })
-  // product: Product;
+  @ManyToOne(() => Product, (product) => product.imageLinks)
+  @JoinColumn({ name: 'product_id' })
+  product: Product;
 }

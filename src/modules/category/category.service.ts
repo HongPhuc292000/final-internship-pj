@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  BadRequestException,
-  HttpException,
-} from '@nestjs/common';
+import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { BaseService } from 'src/services/base-crud.service';
