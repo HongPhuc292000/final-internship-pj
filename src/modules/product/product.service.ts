@@ -72,6 +72,7 @@ export class ProductService extends BaseService<Product> {
     const product = this.productRepository.findOne({
       where: { id },
       relations: {
+        category: true,
         productVariants: {
           variantAtributes: {
             atribute: true,

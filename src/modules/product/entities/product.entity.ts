@@ -23,7 +23,9 @@ export class Product extends CustomBaseEntity {
   // @OneToMany(() => ImageLink, (imageLink) => imageLink.product)
   // imageLinks: ImageLink[];
 
-  @ManyToOne(() => Category, { nullable: false })
+  @ManyToOne(() => Category, (category) => category.products, {
+    nullable: false,
+  })
   @JoinColumn({ name: 'category_id' })
   category: Category;
 }
