@@ -34,10 +34,10 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
 
   // find record has field is unique, if found throw error
   async checkUniqueFieldDataIsUsed(
-    where: FindOptionsWhere<Entity>,
+    options: FindOneOptions<Entity>,
     targetName: string,
   ) {
-    const entity = await this.genericRepository.findOne({ where });
+    const entity = await this.genericRepository.findOne(options);
     if (entity) {
       throw new BadRequestException({
         message: `${targetName} is used`,
@@ -47,8 +47,8 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   }
 
   // find record is exited or not. if found return record. if not, throw error
-  async findExistedData(where: FindOptionsWhere<Entity>, targetName?: string) {
-    const entity = await this.genericRepository.findOne({ where });
+  async findExistedData(options: FindOneOptions<Entity>, targetName?: string) {
+    const entity = await this.genericRepository.findOne(options);
     if (entity) {
       return entity;
     } else {

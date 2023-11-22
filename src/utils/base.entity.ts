@@ -27,7 +27,9 @@ export abstract class CustomBaseEntity {
     onUpdate: 'CURRENT_TIMESTAMP(6)',
   })
   updatedAt: Date;
+}
 
+export abstract class CustomBaseEntityWithDetete {
   @Exclude()
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   deletedAt: Date;

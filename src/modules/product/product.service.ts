@@ -29,11 +29,11 @@ export class ProductService extends BaseService<Product> {
     try {
       const { categoryId, variants, imageUrls, ...rest } = createProductDto;
       const category = await this.categoryService.findExistedData(
-        { id: categoryId },
+        { where: { id: categoryId } },
         'category',
       );
       await this.checkUniqueFieldDataIsUsed(
-        { name: rest.name },
+        { where: { name: rest.name } },
         'in this category, product name',
       );
 
