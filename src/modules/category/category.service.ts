@@ -1,8 +1,18 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  BadRequestException,
+  HttpException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToInstance } from 'class-transformer';
 import { BaseService } from 'src/services/base-crud.service';
-import { EEntityName, ListResponseData, ResponseData } from 'src/types';
+import {
+  ECommonRecordId,
+  EEntityName,
+  ListResponseData,
+  ResponseData,
+} from 'src/types';
 import { ICategoryQuery } from 'src/types/Query';
 import { DataSource, Repository } from 'typeorm';
 import { CreateCategoryDto } from './dto/create-category.dto';
@@ -52,7 +62,10 @@ export class CategoryService extends BaseService<Category> {
   }
 
   async findOneCategory(id: string): Promise<ResponseData<Category>> {
-    const result = await this.findByIdWithResponse(id, EEntityName.CATEGORY);
+    const result = await this.findRecordWithResponse(
+      { where: { id }, relations: { childs: true } },
+      EEntityName.CATEGORY,
+    );
     result.data = plainToInstance(Category, result.data);
     return result;
   }
@@ -82,16 +95,43 @@ export class CategoryService extends BaseService<Category> {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      const category = await this.categoryRepository.findOneBy({ id });
-      category.childs = [];
+      const category = await this.categoryRepository.findOne({
+        where: {
+          id,
+        },
+        relations: {
+          childs: true,
+          products: true,
+        },
+      });
+      const commonCategory = await this.categoryRepository.findOne({
+        where: {
+          id: ECommonRecordId.CATEGORY,
+        },
+        relations: {
+          products: true,
+        },
+      });
+
+      if (category.childs.length) {
+        throw new BadRequestException({
+          message: "delete it's child category first",
+          error: 'Bad Request',
+        });
+      }
+      commonCategory.products = [
+        ...commonCategory.products,
+        ...category.products,
+      ];
+      category.products = [];
+      await this.categoryRepository.save(commonCategory);
       const result = await this.removeData(category);
       await queryRunner.commitTransaction();
       return result;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new InternalServerErrorException({
-        message: 'something bad happen',
-      });
+      error.response = { message: error.message };
+      throw new HttpException(error.response, error.status);
     } finally {
       await queryRunner.release();
     }

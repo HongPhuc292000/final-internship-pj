@@ -19,10 +19,13 @@ export class AnyExceptionFilter implements ExceptionFilter {
     let error = 'Internal Server Error';
     let message: string | string[] = 'unknown error';
     if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const exceptionBody = exception.getResponse() as HttpExceptionBody;
+      const exceptionBody = exception.getResponse() as {
+        message?: string;
+        error?: string;
+      };
+      status = exception.getStatus() || status;
       error = exceptionBody?.error || error;
-      message = exception.message;
+      message = exceptionBody?.message || message;
     }
     if (exception instanceof QueryFailedError) {
       error = 'Query error';

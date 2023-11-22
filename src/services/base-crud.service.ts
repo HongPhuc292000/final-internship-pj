@@ -8,6 +8,7 @@ import {
 import {
   DataSource,
   DeepPartial,
+  FindOneOptions,
   FindOptionsWhere,
   Repository,
   SelectQueryBuilder,
@@ -118,11 +119,11 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   }
 
   // find one by id with response
-  async findByIdWithResponse(
-    id: any,
+  async findRecordWithResponse(
+    options: FindOneOptions<Entity>,
     entityName: string,
   ): Promise<ResponseData<Entity>> {
-    const entity = await this.genericRepository.findOne({ where: { id } });
+    const entity = await this.genericRepository.findOne(options);
     if (!entity) {
       throw new NotFoundException({
         message: `not found this ${entityName}`,
@@ -143,9 +144,16 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   }
 
   // soft remove data
-  async removeData(entity: Entity) {
+  async softRemoveData(entity: Entity) {
     await this.genericRepository.save(entity);
     await this.genericRepository.softRemove(entity);
+    return new ResponseData('Deleted');
+  }
+
+  // remove data
+  async removeData(entity: Entity) {
+    await this.genericRepository.save(entity);
+    await this.genericRepository.remove(entity);
     return new ResponseData('Deleted');
   }
 }
