@@ -6,7 +6,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import {
-  DataSource,
   DeepPartial,
   FindOneOptions,
   FindOptionsWhere,
@@ -76,26 +75,30 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   async addNewMultipleDataWithResponse(
     entities: Entity[],
   ): Promise<ResponseData<string>> {
-    const createdEntities = await Promise.allSettled(
-      entities.map(async (entity) => {
-        const savedEntity = await this.genericRepository.save(entity);
-        return savedEntity.id;
-      }),
-    )
-      .then((res) => {
-        const dataResponse = res.map((item) => {
-          if (item.status === 'fulfilled') {
-            return item.value;
-          } else {
-            return ECreateResponseString.FAILED;
-          }
+    if (entities.length > 1) {
+      const createdEntities = await Promise.allSettled(
+        entities.map(async (entity) => {
+          const savedEntity = await this.genericRepository.save(entity);
+          return savedEntity.id;
+        }),
+      )
+        .then((res) => {
+          const dataResponse = res.map((item) => {
+            if (item.status === 'fulfilled') {
+              return item.value;
+            } else {
+              return ECreateResponseString.FAILED;
+            }
+          });
+          return dataResponse;
+        })
+        .catch((err) => {
+          throw new InternalServerErrorException(err);
         });
-        return dataResponse;
-      })
-      .catch((err) => {
-        throw new InternalServerErrorException(err);
-      });
-    return new ResponseData(createdEntities, HttpStatus.CREATED);
+      return new ResponseData(createdEntities, HttpStatus.CREATED);
+    }
+    const savedEntity = await this.genericRepository.save(entities[0]);
+    return new ResponseData(savedEntity.id, HttpStatus.CREATED);
   }
 
   // handle common query

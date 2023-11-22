@@ -1,5 +1,11 @@
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsUUID,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 import { IsNonPrimitiveArray } from 'src/decorators/validation/isNonPrimitiveArray.decorator';
 import { CreateVariantDto } from 'src/modules/variant/dto/createVariant.dto';
 
@@ -15,6 +21,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   @IsUUID()
   categoryId: string;
+
+  @IsNotEmpty()
+  @IsString({ each: true })
+  imageUrls: string[];
 
   @ValidateNested({ each: true })
   @IsNonPrimitiveArray()

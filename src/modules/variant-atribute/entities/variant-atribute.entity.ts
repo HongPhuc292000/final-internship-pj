@@ -2,14 +2,7 @@ import { AtributeOption } from 'src/modules/atribute-option/entities/atribute-op
 import { Atribute } from 'src/modules/atribute/entities/atribute.entity';
 import { Variant } from 'src/modules/variant/entities/variant.entity';
 import { CustomBaseEntity } from 'src/utils/base.entity';
-import {
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  OneToOne,
-} from 'typeorm';
+import { Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('variant_atribute')
 export class VariantAtribute extends CustomBaseEntity {

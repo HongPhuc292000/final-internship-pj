@@ -1,16 +1,12 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  BadRequestException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/services/base-crud.service';
+import { ResponseData } from 'src/types';
 import { ICommonQuery } from 'src/types/Query';
 import { Repository } from 'typeorm';
 import { Atribute } from '../atribute/entities/atribute.entity';
 import { CreateMultipleAtributeOptionDto } from './dto/createAtributeOption.dto';
 import { AtributeOption } from './entities/atribute-option.entity';
-import { ECreateResponseString, ResponseData } from 'src/types';
 
 @Injectable()
 export class AtributeOptionService extends BaseService<AtributeOption> {

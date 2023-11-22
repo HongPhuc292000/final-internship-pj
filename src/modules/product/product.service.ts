@@ -1,20 +1,13 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  HttpException,
-} from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { BaseService } from 'src/services/base-crud.service';
+import { DataSource, Repository } from 'typeorm';
+import { CategoryService } from '../category/category.service';
+import { ImageLinkService } from '../image-link/image-link.service';
+import { VariantService } from '../variant/variant.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './entities/product.entity';
-import { DataSource, QueryFailedError, Repository } from 'typeorm';
-import { ResponseData } from 'src/types';
-import { BaseService } from 'src/services/base-crud.service';
-import { CategoryService } from '../category/category.service';
-import { AtributeService } from '../atribute/atribute.service';
-import { AtributeOptionService } from '../atribute-option/atribute-option.service';
-import { VariantService } from '../variant/variant.service';
 
 @Injectable()
 export class ProductService extends BaseService<Product> {
@@ -22,8 +15,7 @@ export class ProductService extends BaseService<Product> {
     @InjectRepository(Product) private productRepository: Repository<Product>,
     private categoryService: CategoryService,
     private variantService: VariantService,
-    private atributeService: AtributeService,
-    private atributeOptionService: AtributeOptionService,
+    private imageLinkService: ImageLinkService,
     private dataSource: DataSource,
   ) {
     super(productRepository);
@@ -35,7 +27,7 @@ export class ProductService extends BaseService<Product> {
     await queryRunner.startTransaction();
 
     try {
-      const { categoryId, variants, ...rest } = createProductDto;
+      const { categoryId, variants, imageUrls, ...rest } = createProductDto;
       const category = await this.categoryService.findExistedData(
         { id: categoryId },
         'category',
@@ -49,6 +41,12 @@ export class ProductService extends BaseService<Product> {
       const newProduct = this.productRepository.create(rest);
       newProduct.category = category;
 
+      // handle images
+      const imagesToCreate = this.imageLinkService.createMultipleImageLink({
+        imageUrls,
+      });
+      newProduct.imageLinks = imagesToCreate;
+
       // handle variant
       const variantsToCreate =
         await this.variantService.addNewMultipleVariant(variants);
@@ -56,9 +54,10 @@ export class ProductService extends BaseService<Product> {
 
       await queryRunner.commitTransaction();
       return this.addNewDataWithResponse(newProduct);
-    } catch (err) {
+    } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new HttpException(err.response, err.status);
+      error.response = { message: error.message };
+      throw new HttpException(error.response, error.status);
     } finally {
       await queryRunner.release();
     }

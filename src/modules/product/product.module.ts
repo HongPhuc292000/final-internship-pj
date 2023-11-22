@@ -7,6 +7,7 @@ import { CategoryModule } from '../category/category.module';
 import { AtributeModule } from '../atribute/atribute.module';
 import { AtributeOptionModule } from '../atribute-option/atribute-option.module';
 import { VariantModule } from '../variant/variant.module';
+import { ImageLinkModule } from '../image-link/image-link.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { VariantModule } from '../variant/variant.module';
     AtributeModule,
     AtributeOptionModule,
     VariantModule,
+    ImageLinkModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

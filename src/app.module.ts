@@ -12,6 +12,7 @@ import { AtributeModule } from './modules/atribute/atribute.module';
 import { AtributeOptionModule } from './modules/atribute-option/atribute-option.module';
 import { VariantAtributeModule } from './modules/variant-atribute/variant-atribute.module';
 import { ProductModule } from './modules/product/product.module';
+import { ImageLinkModule } from './modules/image-link/image-link.module';
 
 const ENV = process.env.NODE_ENV;
 
@@ -32,6 +33,7 @@ const ENV = process.env.NODE_ENV;
     AtributeOptionModule,
     VariantAtributeModule,
     ProductModule,
+    ImageLinkModule,
   ],
   providers: [
     {
