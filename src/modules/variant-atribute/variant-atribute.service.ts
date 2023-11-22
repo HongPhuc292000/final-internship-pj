@@ -21,11 +21,13 @@ export class VariantAtributeService extends BaseService<VariantAtribute> {
   async addNewMultipleVariantAtribute(setVariantDto: SetVariantDto[]) {
     const variantAtributes = setVariantDto.map(async (variantAtribute) => {
       const atribute = await this.atributeService.findExistedData(
-        { id: variantAtribute.atribute },
+        { where: { id: variantAtribute.atribute } },
         'atribute',
       );
       const atributeOption = await this.atributeOptionService.findExistedData({
-        id: variantAtribute.atributeOption,
+        where: {
+          id: variantAtribute.atributeOption,
+        },
       });
       const createdVariantAtribute = this.variantAtributeRepository.create({
         atribute: atribute,
