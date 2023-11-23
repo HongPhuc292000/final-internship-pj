@@ -29,7 +29,7 @@ export abstract class CustomBaseEntity {
   updatedAt: Date;
 }
 
-export abstract class CustomBaseEntityWithDetete {
+export abstract class CustomBaseEntityWithDetete extends CustomBaseEntity {
   @Exclude()
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   deletedAt: Date;

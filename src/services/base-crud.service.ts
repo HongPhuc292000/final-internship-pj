@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   DeepPartial,
+  FindManyOptions,
   FindOneOptions,
   FindOptionsWhere,
   Repository,
@@ -101,16 +102,32 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ResponseData(savedEntity.id, HttpStatus.CREATED);
   }
 
+  // handle common query with repo
+  async handleCommonQueryRepo(
+    options: FindManyOptions<Entity>,
+    commonQuery: ICommonQuery,
+  ) {
+    const { page = 1, size = 10, all } = commonQuery;
+    if (!all) {
+      options.take = size;
+      options.skip = size * (page - 1);
+    }
+    const records = await this.genericRepository.find(options);
+    const totalRecord = await this.genericRepository.count();
+    if (all) {
+      return new ListResponseData(records, totalRecord);
+    }
+    return new ListResponseData(records, totalRecord, +page, +size);
+  }
+
   // handle common query
   async handleCommonQuery(
     selectQueryBuilder: SelectQueryBuilder<Entity>,
     commonQuery: ICommonQuery,
   ): Promise<ListResponseData<Entity>> {
     const { page = 1, size = 10, all } = commonQuery;
-    const queryPage = page;
-    const querySize = size;
-    selectQueryBuilder.skip(all ? 0 : (page - 1) * size);
     if (!all) {
+      selectQueryBuilder.skip(all ? 0 : (page - 1) * size);
       selectQueryBuilder.take(size);
     }
     const records = await selectQueryBuilder.getMany();
@@ -118,7 +135,7 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     if (all) {
       return new ListResponseData(records, totalRecord);
     }
-    return new ListResponseData(records, totalRecord, queryPage, querySize);
+    return new ListResponseData(records, totalRecord, +page, +size);
   }
 
   // find one by id with response
