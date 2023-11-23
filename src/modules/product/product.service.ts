@@ -1,13 +1,18 @@
 import { HttpException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 import { BaseService } from 'src/services/base-crud.service';
-import { DataSource, Repository } from 'typeorm';
+import { ResponseData } from 'src/types';
+import { DataSource, FindManyOptions, Like, Repository } from 'typeorm';
 import { CategoryService } from '../category/category.service';
 import { ImageLinkService } from '../image-link/image-link.service';
 import { VariantService } from '../variant/variant.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
+import { ResponseDetailProduct } from './types/DetailProductResponse';
+import { IProductQuery } from 'src/types/Query';
+import { ListProductResponse } from './types/ListProductResponse.type';
 
 @Injectable()
 export class ProductService extends BaseService<Product> {
@@ -63,31 +68,59 @@ export class ProductService extends BaseService<Product> {
     }
   }
 
-  findAllProduct() {
-    return `This action returns all product`;
+  async findAllProduct(query: IProductQuery) {
+    const { categoryId, searchKey = '', ...rest } = query;
+    const specifiedOptions: FindManyOptions<Product> = {
+      relations: {
+        imageLinks: true,
+        productVariants: true,
+      },
+      where: {
+        category: { id: categoryId },
+        name: Like(`%${searchKey}%`),
+      },
+    };
+
+    const result = await this.handleCommonQueryRepo(specifiedOptions, rest);
+    const newData = plainToClass(ListProductResponse, result.data);
+
+    return {
+      ...result,
+      data: newData,
+    };
   }
 
-  findOneProductById(id: string) {
-    const product = this.productRepository.findOne({
-      where: { id },
-      relations: {
-        category: true,
-        productVariants: {
-          variantAtributes: {
-            atribute: true,
-            atributeOption: true,
+  async findOneProductById(id: string) {
+    const product = await this.findExistedData(
+      {
+        relations: {
+          category: true,
+          imageLinks: true,
+          productVariants: {
+            image: true,
+            variantAtributes: {
+              atribute: true,
+              atributeOption: true,
+            },
           },
         },
+        where: { id },
+        withDeleted: true,
       },
-    });
-    return product;
+      'product',
+    );
+
+    const newData = plainToClass(ResponseDetailProduct, product);
+    return new ResponseData(newData);
   }
 
-  updateProduct(id: number, updateProductDto: UpdateProductDto) {
+  async updateProduct(id: string, updateProductDto: UpdateProductDto) {
     return `This action updates a #${id} product`;
   }
 
-  removeProduct(id: number) {
-    return `This action removes a #${id} product`;
+  async removeProduct(id: string) {
+    const product = await this.findExistedData({ where: { id } });
+    const result = await this.softRemoveData(product);
+    return result;
   }
 }
