@@ -88,21 +88,25 @@ export class CategoryService extends BaseService<Category> {
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<ResponseData<string>> {
     const { parentId, ...rest } = updateCategoryDto;
-    const category = await this.findExistedData(
+    let category = await this.findExistedData(
       {
         where: { id },
         relations: { parent: true },
       },
       'category',
     );
-    await this.handleCheckNameIsUsed({ parentId, name: rest.name });
+    if (rest.name) {
+      await this.handleCheckNameIsUsed({ parentId, name: rest.name });
+    }
+
     if (parentId && category.parent.id !== parentId) {
       const newParent = await this.categoryRepository.findOneBy({
         id: parentId,
       });
       category.parent = newParent;
     }
-    return this.updateData(category, rest);
+    category = { ...category, ...rest };
+    return this.updateData(category);
   }
 
   async removeCategory(id: string): Promise<ResponseData<string>> {

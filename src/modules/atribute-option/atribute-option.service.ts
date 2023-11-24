@@ -2,8 +2,8 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/services/base-crud.service';
 import { ResponseData } from 'src/types';
-import { ICommonQuery } from 'src/types/Query';
-import { Repository } from 'typeorm';
+import { IAtributeOption } from 'src/types/Query';
+import { FindManyOptions, Like, Repository } from 'typeorm';
 import { Atribute } from '../atribute/entities/atribute.entity';
 import { CreateMultipleAtributeOptionDto } from './dto/createAtributeOption.dto';
 import { AtributeOption } from './entities/atribute-option.entity';
@@ -41,14 +41,17 @@ export class AtributeOptionService extends BaseService<AtributeOption> {
     return this.addNewMultipleDataWithResponse(dataToSave);
   }
 
-  async findAllAtributeOption(query: ICommonQuery) {
-    const { searchKey = '', ...rest } = query;
-    const specifiedQuery = this.atributeOptionRepository
-      .createQueryBuilder('atribute_option')
-      .where('atribute_option.value like :searchKey', {
-        searchKey: `%${searchKey}%`,
-      });
-    const result = await this.handleCommonQuery(specifiedQuery, rest);
+  async findAllAtributeOption(query: IAtributeOption) {
+    const { searchKey = '', atributeId, ...rest } = query;
+    const specifiedQuery: FindManyOptions<AtributeOption> = {
+      where: {
+        value: Like(`%${searchKey}%`),
+        atribute: {
+          id: atributeId,
+        },
+      },
+    };
+    const result = await this.handleCommonQueryRepo(specifiedQuery, rest);
     return result;
   }
 }

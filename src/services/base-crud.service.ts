@@ -154,12 +154,8 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   }
 
   // update data existed
-  async updateData(entity: Entity, newData: Partial<Entity>) {
-    const updatedEntity = await this.genericRepository.save({
-      ...entity,
-      ...newData,
-    });
-
+  async updateData(entity: Entity) {
+    const updatedEntity = await this.genericRepository.save(entity);
     return new ResponseData(updatedEntity.id);
   }
 
@@ -172,7 +168,7 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
 
   // remove data
   async removeData(entity: Entity) {
-    await this.genericRepository.save(entity);
+    // await this.genericRepository.save(entity);
     await this.genericRepository.remove(entity);
     return new ResponseData('Deleted');
   }

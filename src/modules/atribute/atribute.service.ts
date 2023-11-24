@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/services/base-crud.service';
 import { Atribute } from './entities/atribute.entity';
 import { Repository } from 'typeorm';
 import { CreateAtributeDto } from './dto/createAtribute.dto';
 import { ICommonQuery } from 'src/types/Query';
+import { UpdateAtributeDto } from './dto/updateAtribute.dto';
 
 @Injectable()
 export class AtributeService extends BaseService<Atribute> {
@@ -16,6 +17,10 @@ export class AtributeService extends BaseService<Atribute> {
   }
 
   async addNewAtribute(createAtributeDto: CreateAtributeDto) {
+    await this.checkUniqueFieldDataIsUsed(
+      { where: { name: createAtributeDto.name } },
+      'atribute name',
+    );
     const newAtribute = this.atributeRepository.create(createAtributeDto);
     return this.addNewDataWithResponse(newAtribute);
   }
@@ -29,5 +34,39 @@ export class AtributeService extends BaseService<Atribute> {
       });
     const result = await this.handleCommonQuery(specifiedQuery, rest);
     return result;
+  }
+
+  async updateAtribute(id: string, updateAtributeDto: UpdateAtributeDto) {
+    const name = updateAtributeDto?.name;
+    const atribute = await this.findExistedData({ where: { id } }, 'atribute');
+    if (name) {
+      await this.checkUniqueFieldDataIsUsed(
+        { where: { name } },
+        'atribute name',
+      );
+      atribute.name = name;
+    }
+
+    return this.updateData(atribute);
+  }
+
+  async removeAtribute(id: string) {
+    const atribute = await this.findExistedData(
+      {
+        relations: {
+          variantAtributes: true,
+        },
+        where: { id },
+      },
+      'atribute',
+    );
+
+    if (atribute.variantAtributes.length) {
+      throw new BadRequestException({
+        message: 'atribute is used in some products',
+      });
+    }
+
+    return await this.removeData(atribute);
   }
 }

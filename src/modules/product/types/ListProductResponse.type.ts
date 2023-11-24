@@ -1,13 +1,12 @@
-import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { Product } from '../entities/product.entity';
+import { Exclude, Expose, Transform } from 'class-transformer';
 import { ImageLink } from 'src/modules/image-link/entities/image-link.entity';
-import { ResponseDetailVariant } from './DetailProductResponse';
 import { Variant } from 'src/modules/variant/entities/variant.entity';
 import {
+  getArrayPrice,
   getMaxArrayNumber,
   getMinArrayNumber,
-  getArrayPrice,
 } from 'src/utils/handleArray';
+import { Product } from '../entities/product.entity';
 
 export class ListProductResponse extends Product {
   @Exclude()

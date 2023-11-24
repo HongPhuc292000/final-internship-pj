@@ -12,3 +12,7 @@ export interface ICategoryQuery extends ICommonQuery {
 export interface IProductQuery extends ICommonQuery {
   categoryId?: string;
 }
+
+export interface IAtributeOption extends ICommonQuery {
+  atributeId?: string;
+}

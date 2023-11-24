@@ -1,4 +1,4 @@
-import { Expose, Exclude } from 'class-transformer';
+import { Expose, Exclude, Transform } from 'class-transformer';
 import {
   CreateDateColumn,
   PrimaryGeneratedColumn,
@@ -33,4 +33,8 @@ export abstract class CustomBaseEntityWithDetete extends CustomBaseEntity {
   @Exclude()
   @DeleteDateColumn({ name: 'deleted_at', nullable: true })
   deletedAt: Date;
+
+  @Expose()
+  @Transform(({ value, key, obj, type }) => (obj.deletedAt ? 1 : undefined))
+  isDelete: number;
 }

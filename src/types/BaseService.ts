@@ -1,9 +1,4 @@
-import {
-  DeepPartial,
-  FindOneOptions,
-  FindOptionsWhere,
-  SelectQueryBuilder,
-} from 'typeorm';
+import { DeepPartial, FindOneOptions, SelectQueryBuilder } from 'typeorm';
 import { ListResponseData, ResponseData } from './Response';
 import { ICommonQuery } from './Query';
 

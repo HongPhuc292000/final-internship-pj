@@ -1,19 +1,9 @@
-import { Exclude, Expose, Type } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { Category } from 'src/modules/category/entities/category.entity';
 import { ImageLink } from 'src/modules/image-link/entities/image-link.entity';
 import { Variant } from 'src/modules/variant/entities/variant.entity';
-import {
-  CustomBaseEntity,
-  CustomBaseEntityWithDetete,
-} from 'src/utils/base.entity';
-import {
-  Column,
-  DeleteDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { CustomBaseEntityWithDetete } from 'src/utils/base.entity';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity()
 export class Product extends CustomBaseEntityWithDetete {
