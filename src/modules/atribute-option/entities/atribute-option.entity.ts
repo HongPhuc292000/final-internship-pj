@@ -7,7 +7,9 @@ export class AtributeOption extends CustomBaseEntity {
   @Column({ length: 100, nullable: false })
   value: string;
 
-  @ManyToOne(() => Atribute)
+  @ManyToOne(() => Atribute, (atribute) => atribute.atributeOptions, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'atribute_id' })
   atribute: Atribute;
 }

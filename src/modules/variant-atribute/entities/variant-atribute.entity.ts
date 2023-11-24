@@ -10,7 +10,9 @@ export class VariantAtribute extends CustomBaseEntity {
   @JoinColumn({ name: 'variant_id' })
   variant: Variant;
 
-  @ManyToOne(() => Atribute, { cascade: ['insert'] })
+  @ManyToOne(() => Atribute, (atribute) => atribute.variantAtributes, {
+    cascade: ['insert'],
+  })
   @JoinColumn({ name: 'atribute_id' })
   atribute: Atribute;
 
