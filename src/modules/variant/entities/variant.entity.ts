@@ -13,7 +13,9 @@ import {
 
 @Entity()
 export class Variant extends CustomBaseEntity {
-  @ManyToOne(() => Product, (product) => product.productVariants)
+  @ManyToOne(() => Product, (product) => product.productVariants, {
+    orphanedRowAction: 'delete',
+  })
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
@@ -26,14 +28,16 @@ export class Variant extends CustomBaseEntity {
   @Column({ name: 'reduced_price', type: 'int' })
   reducedPrice: number;
 
-  @OneToOne(() => ImageLink, { cascade: ['insert'] })
+  @OneToOne(() => ImageLink, (image) => image.variant, {
+    cascade: ['insert', 'update'],
+  })
   @JoinColumn({ name: 'image_id' })
   image: ImageLink;
 
   @OneToMany(
     () => VariantAtribute,
     (variantAtribute) => variantAtribute.variant,
-    { cascade: ['insert'] },
+    { cascade: ['insert', 'update'] },
   )
   variantAtributes: VariantAtribute[];
 }

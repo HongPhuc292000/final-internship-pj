@@ -1,12 +1,15 @@
 import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
-export class ImageLinkDto {
+export class AddImageLinkDto {
   @IsNotEmpty()
   @MaxLength(30)
   imageUrl: string;
 
   @IsOptional()
-  productId: string;
+  productId?: string;
+
+  @IsOptional()
+  variantId?: string;
 }
 
 export class CreateImageLinkDto {

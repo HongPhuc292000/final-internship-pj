@@ -1,40 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Variant } from './entities/variant.entity';
-import { Repository } from 'typeorm';
 import { BaseService } from 'src/services/base-crud.service';
-import { CreateVariantDto } from './dto/createVariant.dto';
-import { VariantAtributeService } from '../variant-atribute/variant-atribute.service';
-import { omitObject } from 'src/utils/handleObject';
-import { ImageLinkService } from '../image-link/image-link.service';
+import { Repository } from 'typeorm';
+import { AddVariantDto } from './dto/createVariant.dto';
+import { Variant } from './entities/variant.entity';
 
 @Injectable()
 export class VariantService extends BaseService<Variant> {
   constructor(
     @InjectRepository(Variant) private variantRepository: Repository<Variant>,
-    private variantAtributeService: VariantAtributeService,
-    private imageLinkService: ImageLinkService,
   ) {
     super(variantRepository);
   }
 
-  async addNewMultipleVariant(createMultipleVariantDto: CreateVariantDto[]) {
-    const createdVariants = createMultipleVariantDto.map(async (variant) => {
-      const variantWithoutSet = this.variantRepository.create(
-        omitObject(variant, ['set', 'imageUrl']),
-      );
-
-      const image = this.imageLinkService.createImageLink(variant.imageUrl);
-      variantWithoutSet.image = image;
-
-      const variantAtributeToCreate =
-        await this.variantAtributeService.addNewMultipleVariantAtribute(
-          variant.set,
-        );
-      variantWithoutSet.variantAtributes = variantAtributeToCreate;
-
-      return variantWithoutSet;
-    });
-    return Promise.all(createdVariants).then((res) => res);
+  async addNewVariant(addNewVariantDto: AddVariantDto) {
+    const { productId, ...rest } = addNewVariantDto;
+    return await this.addNewData({ product: { id: productId }, ...rest });
   }
 }
