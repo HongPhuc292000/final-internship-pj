@@ -8,6 +8,7 @@ import { AtributeModule } from '../atribute/atribute.module';
 import { AtributeOptionModule } from '../atribute-option/atribute-option.module';
 import { VariantModule } from '../variant/variant.module';
 import { ImageLinkModule } from '../image-link/image-link.module';
+import { VariantAtributeModule } from '../variant-atribute/variant-atribute.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ImageLinkModule } from '../image-link/image-link.module';
     AtributeOptionModule,
     VariantModule,
     ImageLinkModule,
+    VariantAtributeModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

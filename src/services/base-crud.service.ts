@@ -1,26 +1,25 @@
 import {
-  HttpStatus,
-  NotFoundException,
   BadRequestException,
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
-import {
-  DeepPartial,
-  FindManyOptions,
-  FindOneOptions,
-  FindOptionsWhere,
-  Repository,
-  SelectQueryBuilder,
-} from 'typeorm';
-import { IBaseService } from 'src/types/BaseService';
-import { CustomBaseEntity } from 'src/utils/base.entity';
 import {
   ECreateResponseString,
   ListResponseData,
   ResponseData,
 } from 'src/types';
+import { IBaseService } from 'src/types/BaseService';
 import { ICommonQuery } from 'src/types/Query';
+import { CustomBaseEntity } from 'src/utils/base.entity';
+import {
+  DeepPartial,
+  FindManyOptions,
+  FindOneOptions,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 
 @Injectable()
 export abstract class BaseService<Entity extends CustomBaseEntity>
@@ -29,8 +28,8 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   constructor(private readonly genericRepository: Repository<Entity>) {}
 
   // find record
-  async checkExistedDataBoolean(where: FindOptionsWhere<Entity>) {
-    return await this.genericRepository.findOne({ where });
+  async checkExistedDataBoolean(options: FindOneOptions<Entity>) {
+    return await this.genericRepository.findOne(options);
   }
 
   // find record has field is unique, if found throw error
@@ -159,6 +158,12 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
     return new ResponseData(updatedEntity.id);
   }
 
+  //save data no response
+  async saveData(entity: Entity) {
+    const updatedEntity = await this.genericRepository.save(entity);
+    return updatedEntity;
+  }
+
   // soft remove data
   async softRemoveData(entity: Entity) {
     await this.genericRepository.save(entity);
@@ -168,7 +173,6 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
 
   // remove data
   async removeData(entity: Entity) {
-    // await this.genericRepository.save(entity);
     await this.genericRepository.remove(entity);
     return new ResponseData('Deleted');
   }

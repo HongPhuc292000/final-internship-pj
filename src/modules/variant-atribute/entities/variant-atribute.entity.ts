@@ -6,7 +6,9 @@ import { Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 @Entity('variant_atribute')
 export class VariantAtribute extends CustomBaseEntity {
-  @ManyToOne(() => Variant, (variant) => variant.variantAtributes)
+  @ManyToOne(() => Variant, (variant) => variant.variantAtributes, {
+    orphanedRowAction: 'delete',
+  })
   @JoinColumn({ name: 'variant_id' })
   variant: Variant;
 

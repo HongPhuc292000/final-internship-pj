@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { ImageLink } from './entities/image-link.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/services/base-crud.service';
-import { CreateImageLinkDto } from './dto/createImageLink.dto';
+import { AddImageLinkDto, CreateImageLinkDto } from './dto/createImageLink.dto';
 
 @Injectable()
 export class ImageLinkService extends BaseService<ImageLink> {
@@ -26,5 +26,18 @@ export class ImageLinkService extends BaseService<ImageLink> {
       imageUrl: imageUrl,
     });
     return createdImages;
+  }
+
+  addNewImageLink(addImageLinkDto: AddImageLinkDto) {
+    const { productId, imageUrl, variantId } = addImageLinkDto;
+    if (productId) {
+      return this.addNewData({ product: { id: productId }, imageUrl });
+    }
+
+    if (variantId) {
+      return this.addNewData({ variant: { id: variantId }, imageUrl });
+    }
+
+    return this.addNewData({ imageUrl });
   }
 }
