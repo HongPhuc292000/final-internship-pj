@@ -17,6 +17,7 @@ import {
   DeepPartial,
   FindManyOptions,
   FindOneOptions,
+  QueryRunner,
   Repository,
   SelectQueryBuilder,
 } from 'typeorm';
@@ -28,8 +29,17 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   constructor(private readonly genericRepository: Repository<Entity>) {}
 
   // find record
-  async checkExistedDataBoolean(options: FindOneOptions<Entity>) {
-    return await this.genericRepository.findOne(options);
+  async checkDataMatched(
+    options: FindOneOptions<Entity>,
+    notfoundMessage: string,
+  ) {
+    const entity = await this.genericRepository.findOne(options);
+    if (!entity) {
+      throw new BadRequestException({
+        message: notfoundMessage,
+        error: 'Bad Request',
+      });
+    }
   }
 
   // find record has field is unique, if found throw error
@@ -63,6 +73,15 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   async addNewData(createEntityDto: DeepPartial<Entity>): Promise<Entity> {
     const newEntity = this.genericRepository.create(createEntityDto);
     return await this.genericRepository.save(newEntity);
+  }
+
+  // add new record to db with a createDto
+  async addNewDataWithQueryRunner(
+    queryRunner: QueryRunner,
+    createEntityDto: DeepPartial<Entity>,
+  ): Promise<Entity> {
+    const newEntity = this.genericRepository.create(createEntityDto);
+    return await queryRunner.manager.save(newEntity);
   }
 
   // add new record to db with an entity created and return a response

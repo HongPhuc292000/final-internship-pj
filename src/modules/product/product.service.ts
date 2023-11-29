@@ -1,9 +1,4 @@
-import {
-  BadRequestException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { plainToClass } from 'class-transformer';
 import { BaseService } from 'src/services/base-crud.service';
@@ -36,29 +31,6 @@ export class ProductService extends BaseService<Product> {
     super(productRepository);
   }
 
-  async addNewVariantToProduct(
-    productId: string,
-    createVariantDto: CreateVariantDto,
-  ) {
-    const { set, imageUrl, ...rest } = createVariantDto;
-    const createdVariant = await this.variantService.addNewVariant({
-      productId,
-      ...rest,
-    });
-    await this.imageLinkService.addNewImageLink({
-      imageUrl,
-      variantId: createdVariant.id,
-    });
-
-    set.forEach(async (item) => {
-      await this.variantAtributeService.addNewVariantAtribute({
-        variantId: createdVariant.id,
-        atributeId: item.atribute,
-        atributeOptionId: item.atributeOption,
-      });
-    });
-  }
-
   async createNewProduct(createProductDto: CreateProductDto) {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -77,27 +49,59 @@ export class ProductService extends BaseService<Product> {
       );
       const newProduct = this.productRepository.create({ ...rest, category });
 
-      const createdProduct = await this.productRepository.save(newProduct);
+      const createdProduct = await queryRunner.manager.save(newProduct);
 
       // handle images
       imageUrls.forEach(
         async (productImageUrl) =>
-          await this.imageLinkService.addNewImageLink({
+          await this.imageLinkService.addNewImageLink(queryRunner, {
             productId: createdProduct.id,
             imageUrl: productImageUrl,
           }),
       );
 
       // handle variant
-      variants.forEach(async (variant) => {
-        await this.addNewVariantToProduct(createdProduct.id, variant);
-      });
+      const variantsCreated = await Promise.all(
+        variants.map(
+          async (variant) =>
+            await this.variantService.addNewVariantToProduct(
+              queryRunner,
+              createdProduct.id,
+              variant,
+            ),
+        ),
+      );
+
+      // handle image in variant
+      await Promise.all(
+        variantsCreated.map(async (variantImage) => {
+          await this.imageLinkService.addNewImageLink(queryRunner, {
+            imageUrl: variantImage.imageUrl,
+            variantId: variantImage.variantId,
+          });
+        }),
+      );
+
+      // handle variant atribute in variant
+      const listVariantAtributes = variantsCreated
+        .map((variantCreated) => {
+          return variantCreated.set;
+        })
+        .flat();
+      await Promise.all(
+        listVariantAtributes.map(async (variantAtribute) => {
+          await this.variantAtributeService.addNewVariantAtribute(queryRunner, {
+            variantId: variantAtribute.variantId,
+            atributeId: variantAtribute.atribute,
+            atributeOptionId: variantAtribute.atributeOption,
+          });
+        }),
+      );
 
       await queryRunner.commitTransaction();
       return new ResponseData(createdProduct.id, HttpStatus.CREATED);
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      error.response = { message: error.message };
       throw new HttpException(error.response, error.status);
     } finally {
       await queryRunner.release();
@@ -132,7 +136,7 @@ export class ProductService extends BaseService<Product> {
       if (imageUrls) {
         const newImageUrls = imageUrls.map(
           async (productImageUrl) =>
-            await this.imageLinkService.addNewImageLink({
+            await this.imageLinkService.addNewImageLink(queryRunner, {
               productId: product.id,
               imageUrl: productImageUrl,
             }),
@@ -141,111 +145,85 @@ export class ProductService extends BaseService<Product> {
         const updatedImages = await Promise.all(newImageUrls);
         product.imageLinks = updatedImages;
       }
+      product.name = rest.name || product.name;
+      product.description = rest.description || product.description;
 
-      const savedProduct = await this.productRepository.save({
-        ...product,
-        ...rest,
-      });
+      const savedProduct = await queryRunner.manager.save(product);
 
       if (variants) {
-        variants.forEach(async (variant) => {
-          const { id, set, imageUrl, ...rest } = variant;
-          if (variant.id) {
-            const createdVariant = await this.variantService.findExistedData(
-              {
-                relations: { image: true },
-                where: { id: variant.id },
-              },
-              'variant',
-            );
-            // handleImage
-            const oldImageId = createdVariant.image.id;
-            if (imageUrl) {
-              const newImageUrl = await this.imageLinkService.addNewImageLink({
-                imageUrl: imageUrl,
-              });
-              createdVariant.image = newImageUrl;
-              await this.variantService.saveData({
-                ...createdVariant,
-                ...rest,
-              });
-              const oldImage = await this.imageLinkService.findExistedData({
-                where: { id: oldImageId },
-              });
-              await this.imageLinkService.removeData(oldImage);
+        const updatedVariants = await Promise.all(
+          variants.map(async (variant) => {
+            if (variant.id) {
+              return await this.variantService.updateVariantToProduct(
+                queryRunner,
+                variant,
+              );
+            } else {
+              return await this.variantService.addNewVariantToProduct(
+                queryRunner,
+                savedProduct.id,
+                variant as CreateVariantDto,
+              );
             }
+          }),
+        );
 
-            // handle set
-            if (set) {
-              set.forEach(async (item) => {
-                const { atribute, atributeOption } = item;
-                if (item.id) {
-                  const existedVariantAtribute =
-                    await this.variantAtributeService.findExistedData({
-                      relations: {
-                        atribute: true,
-                        atributeOption: true,
-                      },
-                      where: { id: item.id },
-                    });
+        // handle image in variant
+        await Promise.all(
+          updatedVariants.map(async (variantImage) => {
+            const { variantId, imageUrl } = variantImage;
 
-                  const newAributeOption = {
-                    atributeOptionId: atributeOption
-                      ? atributeOption
-                      : existedVariantAtribute.atributeOption.id,
-                    atributeId: atribute
-                      ? atribute
-                      : existedVariantAtribute.atribute.id,
-                  };
+            if (imageUrl) {
+              await this.imageLinkService.addNewImageLink(queryRunner, {
+                imageUrl,
+                variantId,
+              });
+            }
+          }),
+        );
 
-                  const checkExistedAtributeOption =
-                    await this.atributeOptionService.checkExistedDataBoolean({
-                      relations: { atribute: true },
-                      where: {
-                        id: newAributeOption.atributeOptionId,
-                        atribute: {
-                          id: newAributeOption.atributeId,
-                        },
-                      },
-                    });
+        const listVariantAtributes = updatedVariants
+          .map((updatedVariant) => {
+            return updatedVariant.set;
+          })
+          .flat();
 
-                  if (!checkExistedAtributeOption) {
-                    throw new BadRequestException({
-                      message: 'atribute and option are not match',
-                    });
-                  }
-
-                  existedVariantAtribute.atribute.id =
-                    newAributeOption.atributeId;
-                  existedVariantAtribute.atributeOption.id =
-                    newAributeOption.atributeOptionId;
-
-                  await this.variantAtributeService.saveData(
-                    existedVariantAtribute,
-                  );
-                } else {
-                  await this.variantAtributeService.addNewVariantAtribute({
-                    variantId: createdVariant.id,
+        await Promise.all(
+          listVariantAtributes.map(async (variantAtribute) => {
+            if (variantAtribute) {
+              const { variantId, atribute, atributeOption, id } =
+                variantAtribute;
+              if (id) {
+                await this.variantAtributeService.updateVariantAtribute(
+                  queryRunner,
+                  {
+                    id,
+                    variantId: variantId,
                     atributeId: atribute,
                     atributeOptionId: atributeOption,
-                  });
-                }
-              });
+                  },
+                );
+              } else {
+                await this.variantAtributeService.addNewVariantAtribute(
+                  queryRunner,
+                  {
+                    variantId: variantId,
+                    atributeId: atribute,
+                    atributeOptionId: atributeOption,
+                  },
+                );
+              }
             }
-          } else {
-            await this.addNewVariantToProduct(
-              savedProduct.id,
-              variant as CreateVariantDto,
-            );
-          }
-        });
+          }),
+        );
       }
 
       await queryRunner.commitTransaction();
       return new ResponseData(product.id);
     } catch (error) {
+      console.log(error);
+
       await queryRunner.rollbackTransaction();
-      error.response = { message: error.message };
       throw new HttpException(error.response, error.status);
     } finally {
       await queryRunner.release();
