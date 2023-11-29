@@ -8,9 +8,9 @@ import { UpdateVariantDto } from 'src/modules/variant/dto/updateVariant.dto';
 export class UpdateProductDto extends PartialType(
   OmitType(CreateProductDto, ['variants']),
 ) {
+  @IsOptional()
   @ValidateNested({ each: true })
   @IsNonPrimitiveArray()
-  @IsOptional()
   @Type(() => UpdateVariantDto)
   variants: UpdateVariantDto[];
 }

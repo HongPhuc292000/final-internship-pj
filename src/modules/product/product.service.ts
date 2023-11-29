@@ -49,57 +49,24 @@ export class ProductService extends BaseService<Product> {
       );
       const newProduct = this.productRepository.create({ ...rest, category });
 
-      const createdProduct = await queryRunner.manager.save(newProduct);
-
       // handle images
-      imageUrls.forEach(
-        async (productImageUrl) =>
-          await this.imageLinkService.addNewImageLink(queryRunner, {
-            productId: createdProduct.id,
-            imageUrl: productImageUrl,
-          }),
+      const createdProductImages = imageUrls.map((productImageUrl) =>
+        this.imageLinkService.createImageLink(productImageUrl),
       );
+      newProduct.imageLinks = createdProductImages;
 
       // handle variant
-      const variantsCreated = await Promise.all(
-        variants.map(
-          async (variant) =>
-            await this.variantService.addNewVariantToProduct(
-              queryRunner,
-              createdProduct.id,
-              variant,
-            ),
-        ),
-      );
-
-      // handle image in variant
-      await Promise.all(
-        variantsCreated.map(async (variantImage) => {
-          await this.imageLinkService.addNewImageLink(queryRunner, {
-            imageUrl: variantImage.imageUrl,
-            variantId: variantImage.variantId,
-          });
+      const createdVariants = await Promise.all(
+        variants.map((variant) => {
+          return this.variantService.createNewVariant(variant);
         }),
       );
+      newProduct.productVariants = createdVariants;
 
-      // handle variant atribute in variant
-      const listVariantAtributes = variantsCreated
-        .map((variantCreated) => {
-          return variantCreated.set;
-        })
-        .flat();
-      await Promise.all(
-        listVariantAtributes.map(async (variantAtribute) => {
-          await this.variantAtributeService.addNewVariantAtribute(queryRunner, {
-            variantId: variantAtribute.variantId,
-            atributeId: variantAtribute.atribute,
-            atributeOptionId: variantAtribute.atributeOption,
-          });
-        }),
-      );
+      const savedProduct = await queryRunner.manager.save(newProduct);
 
       await queryRunner.commitTransaction();
-      return new ResponseData(createdProduct.id, HttpStatus.CREATED);
+      return new ResponseData(savedProduct.id, HttpStatus.CREATED);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new HttpException(error.response, error.status);
@@ -116,6 +83,7 @@ export class ProductService extends BaseService<Product> {
     try {
       let product = await this.findExistedData(
         {
+          relations: { productVariants: true },
           where: { id },
         },
         'product',
@@ -124,6 +92,7 @@ export class ProductService extends BaseService<Product> {
       const { categoryId, imageUrls, variants, name, ...rest } =
         updateProductDto;
 
+      product.description = rest.description || product.description;
       if (name) {
         await this.checkUniqueFieldDataIsUsed(
           { where: { name } },
@@ -144,91 +113,33 @@ export class ProductService extends BaseService<Product> {
 
       // handle images
       if (imageUrls) {
-        const newImageUrls = imageUrls.map(
-          async (productImageUrl) =>
-            await this.imageLinkService.addNewImageLink(queryRunner, {
-              productId: product.id,
-              imageUrl: productImageUrl,
-            }),
+        const createdProductImages = imageUrls.map((productImageUrl) =>
+          this.imageLinkService.createImageLink(productImageUrl),
         );
-
-        const updatedImages = await Promise.all(newImageUrls);
-        product.imageLinks = updatedImages;
+        product.imageLinks = createdProductImages;
       }
-      product.description = rest.description || product.description;
+
+      // handle variant
+      if (variants) {
+        const updatedVariants = await Promise.all(
+          variants.map((variant) => {
+            return this.variantService.updateVariant(variant);
+          }),
+        );
+        const oldProductVariants = product.productVariants;
+        var ids = new Set(updatedVariants.map((d) => d.id));
+        var mergedProductVariants = [
+          ...updatedVariants,
+          ...oldProductVariants.filter((d) => !ids.has(d.id)),
+        ];
+
+        product.productVariants = mergedProductVariants;
+      }
 
       const savedProduct = await queryRunner.manager.save(product);
 
-      if (variants) {
-        const updatedVariants = await Promise.all(
-          variants.map(async (variant) => {
-            if (variant.id) {
-              return await this.variantService.updateVariantToProduct(
-                queryRunner,
-                variant,
-              );
-            } else {
-              return await this.variantService.addNewVariantToProduct(
-                queryRunner,
-                savedProduct.id,
-                variant as CreateVariantDto,
-              );
-            }
-          }),
-        );
-
-        // handle image in variant
-        await Promise.all(
-          updatedVariants.map(async (variantImage) => {
-            const { variantId, imageUrl } = variantImage;
-
-            if (imageUrl) {
-              await this.imageLinkService.addNewImageLink(queryRunner, {
-                imageUrl,
-                variantId,
-              });
-            }
-          }),
-        );
-
-        const listVariantAtributes = updatedVariants
-          .map((updatedVariant) => {
-            return updatedVariant.set;
-          })
-          .flat();
-
-        await Promise.all(
-          listVariantAtributes.map(async (variantAtribute) => {
-            if (variantAtribute) {
-              const { variantId, atribute, atributeOption, id } =
-                variantAtribute;
-              if (id) {
-                await this.variantAtributeService.updateVariantAtribute(
-                  queryRunner,
-                  {
-                    id,
-                    variantId: variantId,
-                    atributeId: atribute,
-                    atributeOptionId: atributeOption,
-                  },
-                );
-              } else {
-                await this.variantAtributeService.addNewVariantAtribute(
-                  queryRunner,
-                  {
-                    variantId: variantId,
-                    atributeId: atribute,
-                    atributeOptionId: atributeOption,
-                  },
-                );
-              }
-            }
-          }),
-        );
-      }
-
       await queryRunner.commitTransaction();
-      return new ResponseData(product.id);
+      return new ResponseData(savedProduct.id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new HttpException(error.response, error.status);

@@ -9,17 +9,3 @@ export class SetVariantDto {
   @IsUUID()
   atributeOption: string;
 }
-
-export class CreateVariantAtributeDto {
-  @IsNotEmpty()
-  @IsUUID()
-  variantId: string;
-
-  @IsNotEmpty()
-  @IsUUID()
-  atributeId: string;
-
-  @IsNotEmpty()
-  @IsUUID()
-  atributeOptionId: string;
-}
