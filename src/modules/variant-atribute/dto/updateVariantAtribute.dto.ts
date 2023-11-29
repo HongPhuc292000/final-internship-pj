@@ -7,21 +7,3 @@ export class UpdateSetVariantDto extends PartialType(SetVariantDto) {
   @IsUUID()
   id: string;
 }
-
-export class UpdateVariantAtributeDto {
-  @IsNotEmpty()
-  @IsUUID()
-  id: string;
-
-  @IsNotEmpty()
-  @IsUUID()
-  variantId: string;
-
-  @IsOptional()
-  @IsUUID()
-  atributeId: string;
-
-  @IsOptional()
-  @IsUUID()
-  atributeOptionId: string;
-}

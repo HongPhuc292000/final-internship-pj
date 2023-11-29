@@ -1,11 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BaseService } from 'src/services/base-crud.service';
-import { QueryRunner, Repository } from 'typeorm';
-import { CreateVariantAtributeDto } from './dto/createVariantAtribute.dto';
+import { Repository } from 'typeorm';
+import { SetVariantDto } from './dto/createVariantAtribute.dto';
 import { VariantAtribute } from './entities/variant-atribute.entity';
 import { AtributeOptionService } from '../atribute-option/atribute-option.service';
-import { UpdateVariantAtributeDto } from './dto/updateVariantAtribute.dto';
+import { UpdateSetVariantDto } from './dto/updateVariantAtribute.dto';
+import { AtributeService } from '../atribute/atribute.service';
 
 @Injectable()
 export class VariantAtributeService extends BaseService<VariantAtribute> {
@@ -13,70 +14,88 @@ export class VariantAtributeService extends BaseService<VariantAtribute> {
     @InjectRepository(VariantAtribute)
     private variantAtributeRepository: Repository<VariantAtribute>,
     private atributeOptionService: AtributeOptionService,
+    private atributeService: AtributeService,
   ) {
     super(variantAtributeRepository);
   }
 
-  async addNewVariantAtribute(
-    queryRunner: QueryRunner,
-    createVariantAtributeDto: CreateVariantAtributeDto,
-  ) {
-    const { variantId, atributeId, atributeOptionId } =
-      createVariantAtributeDto;
+  async createNewVariantAtribute(setVariantAtribute: SetVariantDto) {
+    const { atribute, atributeOption } = setVariantAtribute;
+    if (!atribute || !atributeOption) {
+      throw new BadRequestException({
+        error: 'Bad Request',
+        message: 'data of new variant atribute not valid',
+      });
+    }
+
     await this.atributeOptionService.checkDataMatched(
       {
         relations: { atribute: true },
         where: {
-          id: atributeOptionId,
+          id: atributeOption,
           atribute: {
-            id: atributeId,
+            id: atribute,
           },
         },
       },
       'atribute and option are not match',
     );
-
-    const dataToCreate = {
-      variant: { id: variantId },
-      atribute: { id: atributeId },
-      atributeOption: { id: atributeOptionId },
-    };
-    return this.addNewDataWithQueryRunner(queryRunner, dataToCreate);
-  }
-
-  async updateVariantAtribute(
-    queryRunner: QueryRunner,
-    createVariantAtributeDto: UpdateVariantAtributeDto,
-  ) {
-    const { id, atributeId, atributeOptionId } = createVariantAtributeDto;
-    const createdVariantAtribute = await this.findExistedData({
-      relations: { atribute: true, atributeOption: true },
-      where: { id },
+    const newSetVariant = this.variantAtributeRepository.create({
+      atribute: { id: atribute },
+      atributeOption: { id: atributeOption },
     });
 
-    const newAtributeOption = {
-      atributeOptionId: atributeOptionId
-        ? atributeOptionId
-        : createdVariantAtribute.atributeOption.id,
-      atributeId: atributeId ? atributeId : createdVariantAtribute.atribute.id,
-    };
+    return newSetVariant;
+  }
 
-    await this.atributeOptionService.checkDataMatched(
-      {
-        relations: { atribute: true },
-        where: {
-          id: newAtributeOption.atributeOptionId,
-          atribute: {
-            id: newAtributeOption.atributeId,
+  async updateVariantAtributeDemo(
+    updateSetVariantAtribute: UpdateSetVariantDto,
+  ) {
+    const { id, atribute, atributeOption } = updateSetVariantAtribute;
+
+    if (id) {
+      const createdVariantAtribute = await this.findExistedData({
+        relations: { atribute: true, atributeOption: true },
+        where: { id },
+      });
+
+      const newAtributeOption = {
+        atributeOptionId: atributeOption
+          ? atributeOption
+          : createdVariantAtribute.atributeOption.id,
+        atributeId: atribute ? atribute : createdVariantAtribute.atribute.id,
+      };
+
+      await this.atributeOptionService.checkDataMatched(
+        {
+          relations: { atribute: true },
+          where: {
+            id: newAtributeOption.atributeOptionId,
+            atribute: {
+              id: newAtributeOption.atributeId,
+            },
           },
         },
-      },
-      'atribute and option are not match',
-    );
-    createdVariantAtribute.atribute.id = newAtributeOption.atributeId;
-    createdVariantAtribute.atributeOption.id =
-      newAtributeOption.atributeOptionId;
+        'atribute and option are not match',
+      );
 
-    return await queryRunner.manager.save(createdVariantAtribute);
+      createdVariantAtribute.atribute.id = newAtributeOption.atributeId;
+      createdVariantAtribute.atributeOption.id =
+        newAtributeOption.atributeOptionId;
+
+      return createdVariantAtribute;
+    } else {
+      if (!atribute || !atributeOption) {
+        throw new BadRequestException({
+          error: 'Bad Request',
+          message: 'data of new variant atribute not valid',
+        });
+      }
+      const newSetVariant = await this.createNewVariantAtribute({
+        atribute,
+        atributeOption,
+      });
+      return newSetVariant;
+    }
   }
 }
