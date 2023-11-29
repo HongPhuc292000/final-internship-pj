@@ -7,6 +7,7 @@ import { FindManyOptions, Like, Repository } from 'typeorm';
 import { Atribute } from '../atribute/entities/atribute.entity';
 import { CreateMultipleAtributeOptionDto } from './dto/createAtributeOption.dto';
 import { AtributeOption } from './entities/atribute-option.entity';
+import { UpdateAtributeOptionDto } from './dto/updateAtributeOption.dto';
 
 @Injectable()
 export class AtributeOptionService extends BaseService<AtributeOption> {
@@ -53,5 +54,56 @@ export class AtributeOptionService extends BaseService<AtributeOption> {
     };
     const result = await this.handleCommonQueryRepo(specifiedQuery, rest);
     return result;
+  }
+
+  async updateAtribute(
+    id: string,
+    updateAtributeOptionDto: UpdateAtributeOptionDto,
+  ) {
+    const value = updateAtributeOptionDto?.value;
+    const atributeOption = await this.findExistedData(
+      {
+        relations: {
+          atribute: true,
+        },
+        where: { id },
+      },
+      'atribute option',
+    );
+    if (value) {
+      await this.checkUniqueFieldDataIsUsed(
+        {
+          relations: {
+            atribute: true,
+          },
+          where: { value, atribute: { id: atributeOption.atribute.id } },
+        },
+        'atribute option name',
+        id,
+      );
+      atributeOption.value = value;
+    }
+
+    return this.updateData(atributeOption);
+  }
+
+  async removeAtributeOption(id: string) {
+    const atributeOption = await this.findExistedData(
+      {
+        relations: {
+          variantAtributes: true,
+        },
+        where: { id },
+      },
+      'atribute',
+    );
+
+    if (atributeOption.variantAtributes.length) {
+      throw new BadRequestException({
+        message: 'atribute option is used in some variants',
+      });
+    }
+
+    return await this.removeData(atributeOption);
   }
 }

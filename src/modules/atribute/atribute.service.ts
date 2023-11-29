@@ -43,6 +43,7 @@ export class AtributeService extends BaseService<Atribute> {
       await this.checkUniqueFieldDataIsUsed(
         { where: { name } },
         'atribute name',
+        id,
       );
       atribute.name = name;
     }

@@ -1,6 +1,7 @@
 import { Atribute } from 'src/modules/atribute/entities/atribute.entity';
+import { VariantAtribute } from 'src/modules/variant-atribute/entities/variant-atribute.entity';
 import { CustomBaseEntity } from 'src/utils/base.entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 @Entity('atribute_option')
 export class AtributeOption extends CustomBaseEntity {
@@ -12,4 +13,10 @@ export class AtributeOption extends CustomBaseEntity {
   })
   @JoinColumn({ name: 'atribute_id' })
   atribute: Atribute;
+
+  @OneToMany(
+    () => VariantAtribute,
+    (variantAtribute) => variantAtribute.atributeOption,
+  )
+  variantAtributes: VariantAtribute[];
 }

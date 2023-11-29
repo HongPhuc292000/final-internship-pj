@@ -45,7 +45,7 @@ export class ProductService extends BaseService<Product> {
       );
       await this.checkUniqueFieldDataIsUsed(
         { where: { name: rest.name } },
-        'in this category, product name',
+        'product name',
       );
       const newProduct = this.productRepository.create({ ...rest, category });
 
@@ -121,7 +121,17 @@ export class ProductService extends BaseService<Product> {
         'product',
       );
 
-      const { categoryId, imageUrls, variants, ...rest } = updateProductDto;
+      const { categoryId, imageUrls, variants, name, ...rest } =
+        updateProductDto;
+
+      if (name) {
+        await this.checkUniqueFieldDataIsUsed(
+          { where: { name } },
+          'product name',
+          id,
+        );
+        product.name = name || product.name;
+      }
 
       if (categoryId) {
         const newCategory = await this.categoryService.findExistedData(
@@ -145,7 +155,6 @@ export class ProductService extends BaseService<Product> {
         const updatedImages = await Promise.all(newImageUrls);
         product.imageLinks = updatedImages;
       }
-      product.name = rest.name || product.name;
       product.description = rest.description || product.description;
 
       const savedProduct = await queryRunner.manager.save(product);
