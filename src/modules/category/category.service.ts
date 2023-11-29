@@ -87,25 +87,56 @@ export class CategoryService extends BaseService<Category> {
     id: string,
     updateCategoryDto: UpdateCategoryDto,
   ): Promise<ResponseData<string>> {
-    const { parentId, ...rest } = updateCategoryDto;
+    const { parentId, name } = updateCategoryDto;
     let category = await this.findExistedData(
       {
-        where: { id },
         relations: { parent: true },
+        where: { id },
       },
       'category',
     );
-    if (rest.name) {
-      await this.handleCheckNameIsUsed({ parentId, name: rest.name });
+    if (parentId) {
+      await this.findExistedData(
+        {
+          where: { id: parentId },
+        },
+        'category',
+      );
+      if (name) {
+        await this.checkUniqueFieldDataIsUsed(
+          {
+            relations: { parent: true },
+            where: { name, parent: { id: parentId } },
+          },
+          'category name',
+          id,
+        );
+        category.parent.id = parentId;
+        category.name = name;
+      } else {
+        await this.checkUniqueFieldDataIsUsed(
+          {
+            relations: { parent: true },
+            where: { name, parent: { id: category.parent.id } },
+          },
+          'category name',
+          id,
+        );
+        category.parent.id = parentId;
+      }
+    } else {
+      if (name) {
+        await this.checkUniqueFieldDataIsUsed(
+          {
+            relations: { parent: true },
+            where: { name, parent: { id: category.parent.id } },
+          },
+          'category name',
+          id,
+        );
+        category.name = name;
+      }
     }
-
-    if (parentId && category.parent.id !== parentId) {
-      const newParent = await this.categoryRepository.findOneBy({
-        id: parentId,
-      });
-      category.parent = newParent;
-    }
-    category = { ...category, ...rest };
     return this.updateData(category);
   }
 

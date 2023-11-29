@@ -13,7 +13,7 @@ export class Atribute extends CustomBaseEntity {
     (variantAtribute) => variantAtribute.atribute,
     { cascade: ['remove'] },
   )
-  variantAtributes: Atribute[];
+  variantAtributes: VariantAtribute[];
 
   @OneToMany(
     () => AtributeOption,

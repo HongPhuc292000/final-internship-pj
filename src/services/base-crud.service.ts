@@ -46,9 +46,11 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   async checkUniqueFieldDataIsUsed(
     options: FindOneOptions<Entity>,
     targetName: string,
+    id?: string,
   ) {
     const entity = await this.genericRepository.findOne(options);
-    if (entity) {
+
+    if ((!id && entity) || (id && entity && id !== entity.id)) {
       throw new BadRequestException({
         message: `${targetName} is used`,
         error: 'Bad Request',

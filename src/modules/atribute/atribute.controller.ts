@@ -27,6 +27,14 @@ export class AtributeController {
     return this.atributeService.findAllAtribute(query);
   }
 
+  @Get(':id')
+  getById(@Param('id', ParseUUIDPipe) id: string) {
+    return this.atributeService.findRecordWithResponse(
+      { where: { id } },
+      'atribute',
+    );
+  }
+
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
