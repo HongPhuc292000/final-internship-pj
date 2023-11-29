@@ -221,8 +221,6 @@ export class ProductService extends BaseService<Product> {
       await queryRunner.commitTransaction();
       return new ResponseData(product.id);
     } catch (error) {
-      console.log(error);
-
       await queryRunner.rollbackTransaction();
       throw new HttpException(error.response, error.status);
     } finally {
@@ -277,7 +275,7 @@ export class ProductService extends BaseService<Product> {
   }
 
   async removeProduct(id: string) {
-    const product = await this.findExistedData({ where: { id } });
+    const product = await this.findExistedData({ where: { id } }, 'product');
     const result = await this.softRemoveData(product);
     return result;
   }

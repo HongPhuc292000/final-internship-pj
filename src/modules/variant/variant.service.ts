@@ -92,4 +92,9 @@ export class VariantService extends BaseService<Variant> {
 
     return returnProduct;
   }
+
+  async removeVariant(id: string) {
+    const variant = await this.findExistedData({ where: { id } }, 'variant');
+    return await this.softRemoveData(variant);
+  }
 }
