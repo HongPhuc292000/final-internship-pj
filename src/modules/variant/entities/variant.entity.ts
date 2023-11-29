@@ -1,7 +1,7 @@
 import { ImageLink } from 'src/modules/image-link/entities/image-link.entity';
 import { Product } from 'src/modules/product/entities/product.entity';
 import { VariantAtribute } from 'src/modules/variant-atribute/entities/variant-atribute.entity';
-import { CustomBaseEntity } from 'src/utils/base.entity';
+import { CustomBaseEntityWithDetete } from 'src/utils/base.entity';
 import {
   Column,
   Entity,
@@ -12,7 +12,7 @@ import {
 } from 'typeorm';
 
 @Entity()
-export class Variant extends CustomBaseEntity {
+export class Variant extends CustomBaseEntityWithDetete {
   @ManyToOne(() => Product, (product) => product.productVariants, {
     orphanedRowAction: 'delete',
   })
