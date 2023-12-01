@@ -128,18 +128,20 @@ export class ProductService extends BaseService<Product> {
         );
         const oldProductVariants = product.productVariants;
         var ids = new Set(updatedVariants.map((d) => d.id));
-        var mergedProductVariants = [
-          ...updatedVariants,
-          ...oldProductVariants.filter((d) => !ids.has(d.id)),
-        ];
+        const deletedVariants = oldProductVariants
+          .filter((d) => !ids.has(d.id))
+          .map((deletedVariant) => {
+            return { ...deletedVariant, deletedAt: new Date() };
+          });
+        var mergedProductVariants = [...updatedVariants, ...deletedVariants];
 
         product.productVariants = mergedProductVariants;
       }
 
-      const savedProduct = await queryRunner.manager.save(product);
+      await queryRunner.manager.save(product);
 
       await queryRunner.commitTransaction();
-      return new ResponseData(savedProduct.id);
+      return new ResponseData(id);
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw new HttpException(error.response, error.status);

@@ -100,6 +100,7 @@ export class AtributeOptionService extends BaseService<AtributeOption> {
 
     if (atributeOption.variantAtributes.length) {
       throw new BadRequestException({
+        error: 'Bad Request',
         message: 'atribute option is used in some variants',
       });
     }

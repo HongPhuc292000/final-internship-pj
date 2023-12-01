@@ -54,10 +54,13 @@ export class VariantAtributeService extends BaseService<VariantAtribute> {
     const { id, atribute, atributeOption } = updateSetVariantAtribute;
 
     if (id) {
-      const createdVariantAtribute = await this.findExistedData({
-        relations: { atribute: true, atributeOption: true },
-        where: { id },
-      });
+      const createdVariantAtribute = await this.findExistedData(
+        {
+          relations: { atribute: true, atributeOption: true },
+          where: { id },
+        },
+        'variant atribute',
+      );
 
       const newAtributeOption = {
         atributeOptionId: atributeOption
