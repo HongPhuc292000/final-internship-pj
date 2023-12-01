@@ -31,13 +31,12 @@ export class Variant extends CustomBaseEntityWithDetete {
   @OneToOne(() => ImageLink, (image) => image.variant, {
     cascade: ['insert', 'update'],
   })
-  @JoinColumn({ name: 'image_id' })
   image: ImageLink;
 
   @OneToMany(
     () => VariantAtribute,
     (variantAtribute) => variantAtribute.variant,
-    { cascade: ['insert', 'update'] },
+    { cascade: ['insert', 'update', 'remove'] },
   )
   variantAtributes: VariantAtribute[];
 }

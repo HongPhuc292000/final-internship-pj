@@ -59,7 +59,7 @@ export abstract class BaseService<Entity extends CustomBaseEntity>
   }
 
   // find record is exited or not. if found return record. if not, throw error
-  async findExistedData(options: FindOneOptions<Entity>, targetName?: string) {
+  async findExistedData(options: FindOneOptions<Entity>, targetName: string) {
     const entity = await this.genericRepository.findOne(options);
     if (entity) {
       return entity;

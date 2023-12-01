@@ -14,8 +14,7 @@ export class ImageLink extends CustomBaseEntity {
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
-  @OneToOne(() => Variant, (variant) => variant.image, {
-    orphanedRowAction: 'delete',
-  })
+  @OneToOne(() => Variant, (variant) => variant.image)
+  @JoinColumn({ name: 'variant_id' })
   variant: Variant;
 }

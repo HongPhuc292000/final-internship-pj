@@ -64,6 +64,7 @@ export class AtributeService extends BaseService<Atribute> {
 
     if (atribute.variantAtributes.length) {
       throw new BadRequestException({
+        error: 'Bad Request',
         message: 'atribute is used in some variants',
       });
     }

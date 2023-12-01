@@ -40,10 +40,13 @@ export class VariantService extends BaseService<Variant> {
     const { id, imageUrl, set, initialPrice, reducedPrice, totalInstock } =
       updateVariantDto;
     if (id) {
-      const createdVariant = await this.findExistedData({
-        relations: { variantAtributes: true },
-        where: { id },
-      });
+      const createdVariant = await this.findExistedData(
+        {
+          relations: { variantAtributes: true },
+          where: { id },
+        },
+        'variant',
+      );
       createdVariant.initialPrice = initialPrice || createdVariant.initialPrice;
       createdVariant.reducedPrice = reducedPrice || createdVariant.reducedPrice;
       if (imageUrl) {
@@ -60,14 +63,14 @@ export class VariantService extends BaseService<Variant> {
           }),
         );
 
-        const oldVariantAtributes = createdVariant.variantAtributes;
-        const ids = new Set(variantAtributes.map((d) => d.id));
-        const mergedVariantAtributes = [
-          ...variantAtributes,
-          ...oldVariantAtributes.filter((d) => !ids.has(d.id)),
-        ];
+        // const oldVariantAtributes = createdVariant.variantAtributes;
+        // const ids = new Set(variantAtributes.map((d) => d.id));
+        // const mergedVariantAtributes = [
+        //   ...variantAtributes,
+        //   ...oldVariantAtributes.filter((d) => !ids.has(d.id)),
+        // ];
 
-        createdVariant.variantAtributes = mergedVariantAtributes;
+        createdVariant.variantAtributes = variantAtributes;
       }
 
       return createdVariant;
