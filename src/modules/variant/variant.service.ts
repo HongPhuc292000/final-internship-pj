@@ -1,13 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { plainToClass } from 'class-transformer';
 import { BaseService } from 'src/services/base-crud.service';
-import { QueryRunner, Repository } from 'typeorm';
-import { AddVariantDto, CreateVariantDto } from './dto/createVariant.dto';
-import { Variant } from './entities/variant.entity';
-import { ImageLinkService } from '../image-link/image-link.service';
-import { UpdateVariantDto } from './dto/updateVariant.dto';
-import { VariantAtributeService } from '../variant-atribute/variant-atribute.service';
+import { IVariantQuery } from 'src/types/Query';
 import { omitObject } from 'src/utils/handleObject';
+import { FindManyOptions, QueryRunner, Repository } from 'typeorm';
+import { ImageLinkService } from '../image-link/image-link.service';
+import { VariantAtributeService } from '../variant-atribute/variant-atribute.service';
+import { AddVariantDto, CreateVariantDto } from './dto/createVariant.dto';
+import { UpdateVariantDto } from './dto/updateVariant.dto';
+import { Variant } from './entities/variant.entity';
+import { ListVariantResponse } from './types';
 
 @Injectable()
 export class VariantService extends BaseService<Variant> {
@@ -19,24 +22,35 @@ export class VariantService extends BaseService<Variant> {
     super(variantRepository);
   }
 
-  async createNewVariant(createVariantDto: CreateVariantDto) {
+  async createNewVariant(
+    createVariantDto: CreateVariantDto,
+    atributeIds?: string[],
+  ) {
     const { imageUrl, set, ...rest } = createVariantDto;
     const newVariant = this.variantRepository.create(rest);
     const newImage = this.imageLinkService.createImageLink(imageUrl);
     newVariant.image = newImage;
 
-    const variantAtributes = await Promise.all(
-      set.map((setItem) => {
-        return this.variantAtributeService.createNewVariantAtribute(setItem);
-      }),
-    );
+    if (atributeIds) {
+      const variantAtributes = await Promise.all(
+        set.map((setItem) => {
+          return this.variantAtributeService.createNewVariantAtribute(
+            setItem,
+            atributeIds,
+          );
+        }),
+      );
 
-    newVariant.variantAtributes = variantAtributes;
+      newVariant.variantAtributes = variantAtributes;
+    }
 
     return newVariant;
   }
 
-  async updateVariant(updateVariantDto: UpdateVariantDto) {
+  async updateVariant(
+    updateVariantDto: UpdateVariantDto,
+    atributeIds?: string[],
+  ) {
     const { id, imageUrl, set, initialPrice, reducedPrice, totalInstock } =
       updateVariantDto;
     if (id) {
@@ -53,24 +67,18 @@ export class VariantService extends BaseService<Variant> {
         const newImage = this.imageLinkService.createImageLink(imageUrl);
         createdVariant.image = newImage;
       }
-
-      if (set) {
-        const variantAtributes = await Promise.all(
-          set.map((setItem) => {
-            return this.variantAtributeService.updateVariantAtributeDemo(
-              setItem,
-            );
-          }),
-        );
-
-        // const oldVariantAtributes = createdVariant.variantAtributes;
-        // const ids = new Set(variantAtributes.map((d) => d.id));
-        // const mergedVariantAtributes = [
-        //   ...variantAtributes,
-        //   ...oldVariantAtributes.filter((d) => !ids.has(d.id)),
-        // ];
-
-        createdVariant.variantAtributes = variantAtributes;
+      if (atributeIds) {
+        if (set) {
+          const variantAtributes = await Promise.all(
+            set.map((setItem) => {
+              return this.variantAtributeService.updateVariantAtributeDemo(
+                setItem,
+                atributeIds,
+              );
+            }),
+          );
+          createdVariant.variantAtributes = variantAtributes;
+        }
       }
 
       return createdVariant;
@@ -90,6 +98,7 @@ export class VariantService extends BaseService<Variant> {
 
       const newVariant = await this.createNewVariant(
         omitObject(updateVariantDto, ['id']) as CreateVariantDto,
+        atributeIds,
       );
 
       return newVariant;
@@ -110,5 +119,29 @@ export class VariantService extends BaseService<Variant> {
   async removeVariant(id: string) {
     const variant = await this.findExistedData({ where: { id } }, 'variant');
     return await this.softRemoveData(variant);
+  }
+
+  async getAllVariant(query: IVariantQuery) {
+    const { productId, ...rest } = query;
+    const specifiedOptions: FindManyOptions<Variant> = {
+      relations: {
+        product: true,
+        variantAtributes: {
+          atribute: true,
+          atributeOption: true,
+        },
+        image: true,
+      },
+      where: {
+        product: { id: productId },
+      },
+    };
+    const result = await this.handleCommonQueryRepo(specifiedOptions, rest);
+    const newData = plainToClass(ListVariantResponse, result.data);
+
+    return {
+      ...result,
+      data: newData,
+    };
   }
 }

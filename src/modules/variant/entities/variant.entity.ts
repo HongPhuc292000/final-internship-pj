@@ -1,3 +1,4 @@
+import { Expose } from 'class-transformer';
 import { ImageLink } from 'src/modules/image-link/entities/image-link.entity';
 import { Product } from 'src/modules/product/entities/product.entity';
 import { VariantAtribute } from 'src/modules/variant-atribute/entities/variant-atribute.entity';
@@ -19,12 +20,15 @@ export class Variant extends CustomBaseEntityWithDetete {
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
+  @Expose()
   @Column({ name: 'total_instock', type: 'int', nullable: false, default: 0 })
   totalInstock: number;
 
+  @Expose()
   @Column({ name: 'initial_price', type: 'int', nullable: false })
   initialPrice: number;
 
+  @Expose()
   @Column({ name: 'reduced_price', type: 'int' })
   reducedPrice: number;
 

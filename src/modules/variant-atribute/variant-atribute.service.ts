@@ -19,12 +19,22 @@ export class VariantAtributeService extends BaseService<VariantAtribute> {
     super(variantAtributeRepository);
   }
 
-  async createNewVariantAtribute(setVariantAtribute: SetVariantDto) {
+  async createNewVariantAtribute(
+    setVariantAtribute: SetVariantDto,
+    atributeIds?: string[],
+  ) {
     const { atribute, atributeOption } = setVariantAtribute;
     if (!atribute || !atributeOption) {
       throw new BadRequestException({
         error: 'Bad Request',
         message: 'data of new variant atribute not valid',
+      });
+    }
+
+    if (atributeIds && !atributeIds.includes(atribute)) {
+      throw new BadRequestException({
+        error: 'Bad Request',
+        message: 'atribute not valid for product',
       });
     }
 
@@ -50,6 +60,7 @@ export class VariantAtributeService extends BaseService<VariantAtribute> {
 
   async updateVariantAtributeDemo(
     updateSetVariantAtribute: UpdateSetVariantDto,
+    atributeIds?: string[],
   ) {
     const { id, atribute, atributeOption } = updateSetVariantAtribute;
 
@@ -61,6 +72,13 @@ export class VariantAtributeService extends BaseService<VariantAtribute> {
         },
         'variant atribute',
       );
+
+      if (atributeIds && !atributeIds.includes(atribute)) {
+        throw new BadRequestException({
+          error: 'Bad Request',
+          message: 'atribute not valid for product',
+        });
+      }
 
       const newAtributeOption = {
         atributeOptionId: atributeOption
@@ -94,10 +112,13 @@ export class VariantAtributeService extends BaseService<VariantAtribute> {
           message: 'data of new variant atribute not valid',
         });
       }
-      const newSetVariant = await this.createNewVariantAtribute({
-        atribute,
-        atributeOption,
-      });
+      const newSetVariant = await this.createNewVariantAtribute(
+        {
+          atribute,
+          atributeOption,
+        },
+        atributeIds,
+      );
       return newSetVariant;
     }
   }

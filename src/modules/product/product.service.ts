@@ -5,27 +5,24 @@ import { BaseService } from 'src/services/base-crud.service';
 import { ResponseData } from 'src/types';
 import { IProductQuery } from 'src/types/Query';
 import { DataSource, FindManyOptions, Like, Repository } from 'typeorm';
-import { AtributeOptionService } from '../atribute-option/atribute-option.service';
 import { CategoryService } from '../category/category.service';
 import { ImageLinkService } from '../image-link/image-link.service';
-import { VariantAtributeService } from '../variant-atribute/variant-atribute.service';
-import { CreateVariantDto } from '../variant/dto/createVariant.dto';
 import { VariantService } from '../variant/variant.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
 import { ResponseDetailProduct } from './types/DetailProductResponse';
 import { ListProductResponse } from './types/ListProductResponse.type';
+import { AtributeService } from '../atribute/atribute.service';
 
 @Injectable()
 export class ProductService extends BaseService<Product> {
   constructor(
     @InjectRepository(Product) private productRepository: Repository<Product>,
-    private atributeOptionService: AtributeOptionService,
+    private atributeService: AtributeService,
     private categoryService: CategoryService,
     private variantService: VariantService,
     private imageLinkService: ImageLinkService,
-    private variantAtributeService: VariantAtributeService,
     private dataSource: DataSource,
   ) {
     super(productRepository);
@@ -37,7 +34,8 @@ export class ProductService extends BaseService<Product> {
     await queryRunner.startTransaction();
 
     try {
-      const { categoryId, variants, imageUrls, ...rest } = createProductDto;
+      const { categoryId, variants, imageUrls, atributeIds, ...rest } =
+        createProductDto;
 
       const category = await this.categoryService.findExistedData(
         { where: { id: categoryId } },
@@ -55,13 +53,30 @@ export class ProductService extends BaseService<Product> {
       );
       newProduct.imageLinks = createdProductImages;
 
+      // handle atributes
+      if (atributeIds) {
+        const createdAtributes = await Promise.all(
+          atributeIds.map(async (atributeId) => {
+            return await this.atributeService.findExistedData(
+              { where: { id: atributeId } },
+              'atribute',
+            );
+          }),
+        );
+        newProduct.atributes = createdAtributes;
+      }
+
       // handle variant
       const createdVariants = await Promise.all(
         variants.map((variant) => {
-          return this.variantService.createNewVariant(variant);
+          return this.variantService.createNewVariant(variant, atributeIds);
         }),
       );
-      newProduct.productVariants = createdVariants;
+      if (atributeIds) {
+        newProduct.productVariants = createdVariants;
+      } else {
+        newProduct.productVariants = [createdVariants[0]];
+      }
 
       const savedProduct = await queryRunner.manager.save(newProduct);
 
@@ -89,7 +104,7 @@ export class ProductService extends BaseService<Product> {
         'product',
       );
 
-      const { categoryId, imageUrls, variants, name, ...rest } =
+      const { categoryId, imageUrls, variants, name, atributeIds, ...rest } =
         updateProductDto;
 
       product.description = rest.description || product.description;
@@ -119,11 +134,24 @@ export class ProductService extends BaseService<Product> {
         product.imageLinks = createdProductImages;
       }
 
+      // handle atributes
+      if (atributeIds) {
+        const createdAtributes = await Promise.all(
+          atributeIds.map(async (atributeId) => {
+            return await this.atributeService.findExistedData(
+              { where: { id: atributeId } },
+              'atribute',
+            );
+          }),
+        );
+        product.atributes = createdAtributes;
+      }
+
       // handle variant
       if (variants) {
         const updatedVariants = await Promise.all(
           variants.map((variant) => {
-            return this.variantService.updateVariant(variant);
+            return this.variantService.updateVariant(variant, atributeIds);
           }),
         );
         const oldProductVariants = product.productVariants;
@@ -135,7 +163,11 @@ export class ProductService extends BaseService<Product> {
           });
         var mergedProductVariants = [...updatedVariants, ...deletedVariants];
 
-        product.productVariants = mergedProductVariants;
+        if (atributeIds) {
+          product.productVariants = mergedProductVariants;
+        } else {
+          product.productVariants = [updatedVariants[0]];
+        }
       }
 
       await queryRunner.manager.save(product);
@@ -178,6 +210,7 @@ export class ProductService extends BaseService<Product> {
         relations: {
           category: true,
           imageLinks: true,
+          atributes: true,
           productVariants: {
             image: true,
             variantAtributes: {

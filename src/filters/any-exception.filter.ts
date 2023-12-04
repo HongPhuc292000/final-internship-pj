@@ -30,6 +30,7 @@ export class AnyExceptionFilter implements ExceptionFilter {
       error = 'Query error';
       message = exception.message;
     }
+
     response.status(status).json({
       message,
       statusCode: status,
