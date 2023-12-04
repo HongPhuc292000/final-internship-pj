@@ -15,11 +15,17 @@ export class ResponseDetailProductVariantAtribute extends VariantAtribute {
   atributeOption: AtributeOption;
 
   @Expose()
-  @Transform(({ value, key, obj, type }) => obj.atribute.id)
+  @Transform(({ value, key, obj, type }) => ({
+    id: obj.atribute.id,
+    name: obj.atribute.name,
+  }))
   atributeId: string;
 
   @Expose()
-  @Transform(({ value, key, obj, type }) => obj.atributeOption.id)
+  @Transform(({ value, key, obj, type }) => ({
+    id: obj.atributeOption.id,
+    name: obj.atributeOption.value,
+  }))
   atributeOptionId: string;
 }
 
@@ -52,6 +58,15 @@ export class ResponseDetailProduct extends Product {
   @Expose()
   @Transform(({ value, key, obj, type }) => obj.category.id)
   categoryId: string;
+
+  @Exclude()
+  atributes: Atribute[];
+
+  @Expose()
+  @Transform(({ value, key, obj, type }) => [
+    ...obj.atributes.map((atribute) => atribute.id),
+  ])
+  atributeIds: string[];
 
   @Expose()
   @Type(() => ResponseDetailVariant)

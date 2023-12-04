@@ -29,6 +29,7 @@ export class AddVariantDto {
 }
 
 export class CreateVariantDto {
+  @IsOptional()
   @ValidateNested({ each: true })
   @IsNonPrimitiveArray()
   @Type(() => SetVariantDto)

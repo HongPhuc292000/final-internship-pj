@@ -1,6 +1,7 @@
 import { Type } from 'class-transformer';
 import {
   IsNotEmpty,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
@@ -21,6 +22,10 @@ export class CreateProductDto {
   @IsNotEmpty()
   @IsUUID()
   categoryId: string;
+
+  @IsOptional()
+  @IsUUID('all', { each: true })
+  atributeIds: string[];
 
   @IsNotEmpty()
   @IsString({ each: true })
